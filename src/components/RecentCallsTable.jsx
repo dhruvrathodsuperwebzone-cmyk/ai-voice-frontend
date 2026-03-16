@@ -27,27 +27,43 @@ export default function RecentCallsTable({ data, loading }) {
     );
   }
 
-  const first = rows[0];
-  const keys = typeof first === 'object' && first !== null ? Object.keys(first) : [];
-  const displayKeys = keys.filter((k) => !/^_|id$/i.test(k)).slice(0, 6);
-  const headers = displayKeys.length
-    ? displayKeys
-    : ['phone', 'duration', 'status', 'date', 'outcome'].filter((k) => first[k] != null);
+  // Table shows only: Name, Phone, Duration, Outcome
+  const columns = [
+    { key: 'name', label: 'Name', keys: ['name', 'contact_name', 'caller_name', 'contactName', 'callerName'] },
+    { key: 'phone', label: 'Phone', keys: ['phone', 'phone_number', 'phoneNumber', 'to', 'contact_phone'] },
+    { key: 'duration', label: 'Duration', keys: ['duration', 'duration_seconds', 'call_duration', 'length'] },
+    { key: 'outcome', label: 'Outcome', keys: ['outcome', 'status', 'disposition', 'result', 'call_status'] },
+  ];
+
+  function getCellValue(row, col) {
+    for (const k of col.keys) {
+      const v = row[k];
+      if (v !== undefined && v !== null && v !== '') return v;
+    }
+    return null;
+  }
+
+  function formatValue(val, colKey) {
+    if (val == null) return '—';
+    if (typeof val === 'object' && !(val instanceof Date)) return JSON.stringify(val);
+    if (colKey === 'duration' && typeof val === 'number') return `${val}s`;
+    return String(val);
+  }
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm overflow-x-auto">
-      <div className="px-5 py-4 border-b border-slate-200 min-w-[500px]">
+      <div className="px-5 py-4 border-b border-slate-200">
         <h2 className="text-lg font-semibold text-slate-900">Recent Calls</h2>
       </div>
-      <table className="w-full min-w-[500px]">
+      <table className="w-full min-w-[400px]">
         <thead>
           <tr className="bg-slate-50 border-b border-slate-200">
-            {headers.map((key) => (
+            {columns.map((col) => (
               <th
-                key={key}
+                key={col.key}
                 className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider"
               >
-                {key.replace(/_/g, ' ')}
+                {col.label}
               </th>
             ))}
           </tr>
@@ -55,11 +71,9 @@ export default function RecentCallsTable({ data, loading }) {
         <tbody className="divide-y divide-slate-100">
           {rows.slice(0, 10).map((row, i) => (
             <tr key={row.id ?? i} className="hover:bg-slate-50/50">
-              {headers.map((key) => (
-                <td key={key} className="px-5 py-3 text-sm text-slate-700">
-                  {typeof row[key] === 'object' && row[key] !== null && !(row[key] instanceof Date)
-                    ? JSON.stringify(row[key])
-                    : String(row[key] ?? '—')}
+              {columns.map((col) => (
+                <td key={col.key} className="px-5 py-3 text-sm text-slate-700">
+                  {formatValue(getCellValue(row, col), col.key)}
                 </td>
               ))}
             </tr>

@@ -23,7 +23,9 @@ export function AuthProvider({ children }) {
     }
     try {
       const data = await authService.getMe();
-      setUser(data?.user ?? data);
+      // API may return { data: { user: {...} } } or { user: {...} } or {...} as the user object
+      const userObj = data?.data?.user ?? data?.user ?? data;
+      setUser(userObj && typeof userObj === 'object' ? userObj : null);
     } catch {
       localStorage.removeItem(TOKEN_KEY);
       setUser(null);

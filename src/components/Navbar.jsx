@@ -37,10 +37,10 @@ export default function Navbar({ onMenuClick }) {
           aria-haspopup="true"
         >
           <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-semibold">
-            {(user?.name ?? user?.email ?? 'U').charAt(0).toUpperCase()}
+            {(user?.name?.trim() || user?.email || 'U').charAt(0).toUpperCase()}
           </div>
-          <span className="hidden sm:block text-sm font-medium text-slate-700 max-w-[120px] truncate">
-            {user?.name ?? user?.email ?? 'User'}
+          <span className="hidden sm:block text-sm font-medium text-slate-700 max-w-[140px] truncate" title={user?.email}>
+            {user?.name?.trim() || user?.email || 'User'}
           </span>
           <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -52,8 +52,8 @@ export default function Navbar({ onMenuClick }) {
             <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} aria-hidden="true" />
             <div className="absolute right-0 mt-1 w-48 py-1 bg-white rounded-xl shadow-lg border border-slate-200 z-50">
               <div className="px-4 py-2 border-b border-slate-100">
-                <p className="text-sm font-medium text-slate-900 truncate">{user?.name ?? 'User'}</p>
-                <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                <p className="text-sm font-medium text-slate-900 truncate">{user?.name?.trim() || user?.email || 'User'}</p>
+                <p className="text-xs text-slate-500 truncate">{user?.email || '—'}</p>
               </div>
               <button
                 type="button"

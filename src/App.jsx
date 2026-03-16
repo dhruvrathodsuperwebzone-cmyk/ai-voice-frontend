@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './store/authContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import AuthLayout from './layouts/AuthLayout';
+import DashboardLayout from './layouts/DashboardLayout';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -23,10 +24,15 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <DashboardPage />
+                <DashboardLayout />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<DashboardPage />} />
+            <Route path="calls" element={<DashboardPage />} />
+            <Route path="leads" element={<DashboardPage />} />
+            <Route path="campaigns" element={<DashboardPage />} />
+          </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

@@ -10,27 +10,21 @@ import {
 
 function normalizeToRecharts(data) {
   if (!Array.isArray(data)) {
-    const transactions = data?.recent_transactions ?? data?.transactions;
-    if (Array.isArray(transactions) && transactions.length) {
-      return transactions.map((tx, i) => ({
-        name: tx.reference ?? tx.id?.toString() ?? `#${i + 1}`,
-        revenue: Number(tx.amount) || 0,
-      }));
-    }
-    const d = data?.data ?? data?.revenue ?? data?.series ?? [];
+    const d = data?.data ?? data?.conversion ?? data?.series ?? [];
     if (!Array.isArray(d)) return [];
     data = d;
   }
   return data.map((item) => {
     const name = item?.label ?? item?.period ?? item?.month ?? item?.date ?? item?.name ?? '';
-    const value = Number(item?.value ?? item?.revenue ?? item?.amount ?? item?.total ?? 0) || 0;
-    return { name: name || '—', revenue: value };
+    let value = Number(item?.value ?? item?.rate ?? item?.conversionRate ?? item?.conversion_rate ?? 0) || 0;
+    if (value > 0 && value <= 1) value = value * 100;
+    return { name: name || '—', rate: value };
   });
 }
 
 const chartCardClass = 'bg-white rounded-2xl border border-slate-200/80 shadow-lg shadow-slate-200/30 p-6';
 
-export default function RevenueChart({ data, loading, title = 'Revenue per month' }) {
+export default function ConversionChart({ data, loading, title = 'Conversion rate' }) {
   const chartData = normalizeToRecharts(data);
 
   if (loading) {
@@ -43,16 +37,18 @@ export default function RevenueChart({ data, loading, title = 'Revenue per month
     );
   }
 
-  const totalRevenue = chartData.reduce((sum, d) => sum + (d.revenue || 0), 0);
+  const avgRate = chartData.length
+    ? chartData.reduce((sum, d) => sum + (d.rate || 0), 0) / chartData.length
+    : 0;
 
   if (!chartData.length) {
     return (
       <div className={chartCardClass}>
         <h3 className="text-base font-bold text-slate-800 mb-1">{title}</h3>
-        <p className="text-slate-400 text-xs mb-4">Hover on the chart to see values. Add revenue data to see trends.</p>
+        <p className="text-slate-400 text-xs mb-4">Hover on the chart to see %. Leads that convert will drive this metric.</p>
         <div className="h-64 rounded-xl bg-slate-50 flex flex-col items-center justify-center gap-2 text-slate-400 text-sm">
-          <span>No revenue data yet</span>
-          <span className="text-xs">Revenue from payments will appear here</span>
+          <span>No conversion data yet</span>
+          <span className="text-xs">Conversion rate will appear as leads convert</span>
         </div>
       </div>
     );
@@ -62,28 +58,28 @@ export default function RevenueChart({ data, loading, title = 'Revenue per month
     <div className={chartCardClass}>
       <div className="flex items-baseline justify-between gap-2 mb-1">
         <h3 className="text-base font-bold text-slate-800">{title}</h3>
-        <span className="text-sm font-semibold text-indigo-600 whitespace-nowrap">Total ₹{totalRevenue.toLocaleString()}</span>
+        <span className="text-sm font-semibold text-amber-600 whitespace-nowrap">Avg {avgRate.toFixed(1)}%</span>
       </div>
-      <p className="text-slate-400 text-xs mb-4">Hover on the chart to see values</p>
+      <p className="text-slate-400 text-xs mb-4">Hover on the chart to see %</p>
       <ResponsiveContainer width="100%" height={260}>
         <AreaChart data={chartData} margin={{ top: 12, right: 12, left: 0, bottom: 8 }}>
           <defs>
-            <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#6366f1" stopOpacity={0.4} />
-              <stop offset="100%" stopColor="#6366f1" stopOpacity={0.05} />
+            <linearGradient id="conversionGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.02} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
           <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={{ stroke: '#e2e8f0' }} tickLine={false} />
-          <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)} />
+          <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} domain={[0, 'auto']} />
           <Tooltip
-            formatter={(value) => [`₹${Number(value).toLocaleString()}`, 'Revenue']}
+            formatter={(value) => [`${Number(value).toFixed(1)}%`, 'Conversion']}
             contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
             labelStyle={{ color: '#334155', fontWeight: 600 }}
-            itemStyle={{ color: '#6366f1' }}
-            cursor={{ stroke: '#c7d2fe', strokeWidth: 1 }}
+            itemStyle={{ color: '#f59e0b' }}
+            cursor={{ stroke: '#fde68a', strokeWidth: 1 }}
           />
-          <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#6366f1" strokeWidth={2.5} fill="url(#revenueGrad)" />
+          <Area type="monotone" dataKey="rate" name="Conversion %" stroke="#f59e0b" strokeWidth={2.5} fill="url(#conversionGrad)" strokeLinecap="round" strokeLinejoin="round" />
         </AreaChart>
       </ResponsiveContainer>
     </div>
