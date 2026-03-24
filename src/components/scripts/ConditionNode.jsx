@@ -6,10 +6,10 @@ export default function ConditionNode({ id, data }) {
   const onChange = data?.onChange;
 
   return (
-    <div className="w-[360px] rounded-2xl border border-blue-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between gap-3 rounded-t-2xl border-b border-blue-100 bg-blue-50 px-3 py-2">
+    <div className="w-[360px] rounded-2xl border border-indigo-200 bg-white shadow-sm">
+      <div className="flex items-center justify-between gap-3 rounded-t-2xl border-b border-indigo-100 bg-indigo-50 px-3 py-2">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Condition node</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Condition node</p>
           <p className="truncate text-sm font-semibold text-slate-900">{label}</p>
         </div>
       </div>
@@ -35,7 +35,7 @@ export default function ConditionNode({ id, data }) {
       </div>
 
       <Handle type="target" position={Position.Left} className="!h-3 !w-3 !bg-slate-400" />
-      <Handle type="source" position={Position.Right} className="!h-3 !w-3 !bg-blue-600" />
+      <Handle type="source" position={Position.Right} className="!h-3 !w-3 !bg-indigo-600" />
     </div>
   );
 }

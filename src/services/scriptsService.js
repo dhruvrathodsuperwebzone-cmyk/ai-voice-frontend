@@ -39,3 +39,14 @@ export async function deleteScript(id) {
   const { data } = await api.delete(`/scripts/${id}`);
   return data;
 }
+
+/**
+ * GET /scripts/names — fetch scripts as a compact list for dropdowns.
+ * Expected shape examples:
+ * - [ { id, name }, ... ]
+ * - { scripts: [ { id, name }, ... ] }
+ */
+export async function getScriptNames() {
+  const { data } = await api.get('/scripts/names');
+  return data;
+}

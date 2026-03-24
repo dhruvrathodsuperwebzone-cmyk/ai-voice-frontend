@@ -7,11 +7,11 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="flex h-screen min-h-[100dvh] overflow-hidden bg-slate-50">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <Navbar onMenuClick={() => setSidebarOpen((o) => !o)} />
-        <main className="flex-1 p-4 sm:p-6 overflow-auto">
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-4 sm:p-6">
           <Outlet />
         </main>
       </div>

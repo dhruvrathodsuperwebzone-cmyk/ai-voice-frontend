@@ -32,7 +32,7 @@ function InnerFlowEditor({
           <button
             type="button"
             onClick={() => onAddNode('script')}
-            className="rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+            className="btn-primary-gradient rounded-xl px-3 py-2 text-sm font-semibold"
           >
             + Script node
           </button>
@@ -46,7 +46,7 @@ function InnerFlowEditor({
           <button
             type="button"
             onClick={() => onAddNode('condition')}
-            className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-800 hover:bg-blue-100"
+            className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-800 hover:bg-indigo-100"
           >
             + Condition node
           </button>

@@ -1,18 +1,23 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { authGradientButtonBase } from '../constants/authTheme';
 import { useAuth } from '../store/authContext';
+import { useToast } from '../store/toastContext';
 import { hashPassword } from '../utils/passwordHash';
+
+const inputClass =
+  'w-full rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none lg:rounded-lg lg:px-3 lg:py-2.5 lg:text-sm';
 
 function EyeIcon({ show }) {
   if (show) {
     return (
-      <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="h-5 w-5 text-slate-500 lg:h-[18px] lg:w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
       </svg>
     );
   }
   return (
-    <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <svg className="h-5 w-5 text-slate-500 lg:h-[18px] lg:w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
     </svg>
@@ -29,6 +34,7 @@ export default function RegisterForm() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const { register } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
@@ -45,28 +51,40 @@ export default function RegisterForm() {
         phone: phone || undefined,
       });
       if (result?.success) {
+        toast.success('Account created successfully.', { title: 'Success' });
         navigate('/dashboard', { replace: true });
       } else {
-        setError(result?.message || 'Registration failed');
+        const msg = result?.message || 'Registration failed';
+        setError(msg);
+        toast.error(msg, { title: 'Registration failed' });
       }
     } catch (err) {
       const msg = err.response?.data?.message ?? err.message ?? 'Registration failed';
       setError(msg);
+      toast.error(msg, { title: 'Registration failed' });
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <h1 className="text-xl font-semibold text-slate-800">Create account</h1>
+    <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-4 lg:space-y-4">
+      <div>
+        <h1 className="text-[1.375rem] font-bold leading-tight text-slate-900 sm:text-2xl lg:text-xl lg:font-bold">
+          Create account
+        </h1>
+        <p className="mt-1 text-sm text-slate-500 sm:text-[15px] lg:mt-0.5 lg:text-xs">Set up your workspace.</p>
+      </div>
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-          {error}
+        <div className="flex items-start gap-2 rounded-xl border border-red-100 bg-red-50/90 px-4 py-3 text-sm text-red-800 lg:rounded-lg lg:px-3 lg:py-2 lg:text-xs">
+          <span className="mt-0.5 shrink-0" aria-hidden>
+            ⚠
+          </span>
+          <span>{error}</span>
         </div>
       )}
       <div>
-        <label htmlFor="reg-name" className="block text-sm font-medium text-slate-700 mb-1">
+        <label htmlFor="reg-name" className="mb-1.5 block text-sm font-medium text-slate-700 lg:mb-1 lg:text-xs">
           Name
         </label>
         <input
@@ -76,12 +94,12 @@ export default function RegisterForm() {
           onChange={(e) => setName(e.target.value)}
           required
           autoComplete="name"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+          className={inputClass}
           placeholder="John Doe"
         />
       </div>
       <div>
-        <label htmlFor="reg-email" className="block text-sm font-medium text-slate-700 mb-1">
+        <label htmlFor="reg-email" className="mb-1.5 block text-sm font-medium text-slate-700 lg:mb-1 lg:text-xs">
           Email
         </label>
         <input
@@ -91,12 +109,12 @@ export default function RegisterForm() {
           onChange={(e) => setEmail(e.target.value)}
           required
           autoComplete="email"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+          className={inputClass}
           placeholder="you@example.com"
         />
       </div>
       <div>
-        <label htmlFor="reg-password" className="block text-sm font-medium text-slate-700 mb-1">
+        <label htmlFor="reg-password" className="mb-1.5 block text-sm font-medium text-slate-700 lg:mb-1 lg:text-xs">
           Password
         </label>
         <div className="relative">
@@ -108,13 +126,13 @@ export default function RegisterForm() {
             required
             autoComplete="new-password"
             minLength={6}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-12 text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+            className={inputClass + ' pr-12 lg:pr-10'}
             placeholder="••••••••"
           />
           <button
             type="button"
             onClick={() => setShowPassword((p) => !p)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 lg:right-2 lg:p-1"
             tabIndex={-1}
             aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
@@ -123,7 +141,7 @@ export default function RegisterForm() {
         </div>
       </div>
       <div>
-        <label htmlFor="reg-phone" className="block text-sm font-medium text-slate-700 mb-1">
+        <label htmlFor="reg-phone" className="mb-1.5 block text-sm font-medium text-slate-700 lg:mb-1 lg:text-xs">
           Phone (optional)
         </label>
         <input
@@ -132,19 +150,19 @@ export default function RegisterForm() {
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           autoComplete="tel"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+          className={inputClass}
           placeholder="+919876543210"
         />
       </div>
       <div>
-        <label htmlFor="reg-role" className="block text-sm font-medium text-slate-700 mb-1">
+        <label htmlFor="reg-role" className="mb-1.5 block text-sm font-medium text-slate-700 lg:mb-1 lg:text-xs">
           Role
         </label>
         <select
           id="reg-role"
           value={role}
           onChange={(e) => setRole(e.target.value)}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+          className={inputClass}
         >
           <option value="admin">Admin</option>
           <option value="agent">Agent</option>
@@ -154,13 +172,13 @@ export default function RegisterForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-lg bg-indigo-600 text-white font-medium py-2.5 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        className={`${authGradientButtonBase} mt-1 min-h-[48px] py-3.5 text-base lg:min-h-0 lg:rounded-lg lg:py-2.5 lg:text-sm lg:shadow-md lg:shadow-indigo-950/30`}
       >
         {submitting ? 'Creating account...' : 'Create account'}
       </button>
-      <p className="text-center text-sm text-slate-600">
+      <p className="pt-0.5 text-center text-sm text-slate-500 lg:text-xs">
         Already have an account?{' '}
-        <Link to="/login" className="text-indigo-600 hover:text-indigo-700 font-medium">
+        <Link to="/login" className="font-semibold text-blue-700 hover:text-blue-800">
           Sign in
         </Link>
       </p>

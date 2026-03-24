@@ -10,6 +10,14 @@ export async function getLeads(params = {}) {
 }
 
 /**
+ * GET /leads/all — list all leads (admin view)
+ */
+export async function getAllLeads() {
+  const { data } = await api.get('/leads/all');
+  return data;
+}
+
+/**
  * GET /leads/:id
  */
 export async function getLeadById(id) {

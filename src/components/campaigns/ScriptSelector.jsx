@@ -1,43 +1,70 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { getScriptNames } from '../../services/scriptsService';
 
-const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none";
+const inputClass = "w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-800 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none";
 const labelClass = "block text-sm font-medium text-slate-700 mb-1.5";
 
 export default function ScriptSelector({ value, onChange, scripts = [], disabled }) {
+  const [remoteScripts, setRemoteScripts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [remoteError, setRemoteError] = useState('');
+
   const hasScripts = Array.isArray(scripts) && scripts.length > 0;
 
-  if (hasScripts) {
-    return (
-      <div>
-        <label className={labelClass}>Script</label>
-        <select
-          value={value ?? ''}
-          onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
-          disabled={disabled}
-          className={inputClass}
-        >
-          <option value="">Select script</option>
-          {scripts.map((s) => (
-            <option key={s.id} value={s.id}>{s.name || `Script ${s.id}`}</option>
-          ))}
-        </select>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (hasScripts) return;
+    if (disabled) return;
+
+    setLoading(true);
+    setRemoteError('');
+    getScriptNames()
+      .then((data) => {
+        const normalized = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.scripts)
+            ? data.scripts
+            : [];
+        setRemoteScripts(normalized);
+      })
+      .catch((err) => {
+        setRemoteError(err?.response?.data?.message || err?.message || 'Failed to load scripts');
+        setRemoteScripts([]);
+      })
+      .finally(() => setLoading(false));
+  }, [hasScripts, disabled]);
+
+  const options = useMemo(() => {
+    const list = hasScripts ? scripts : remoteScripts;
+    if (!Array.isArray(list)) return [];
+    return list
+      .map((s) => {
+        const id = s?.id ?? s?.script_id ?? s?.scriptId;
+        const name = s?.name ?? s?.title ?? `Script ${id}`;
+        if (id == null || name == null) return null;
+        return { id, name };
+      })
+      .filter(Boolean);
+  }, [hasScripts, scripts, remoteScripts]);
+
+  const currentValue = value ?? '';
 
   return (
     <div>
-      <label className={labelClass}>Script ID</label>
-      <input
-        type="number"
-        min="1"
-        value={value ?? ''}
-        onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
-        disabled={disabled}
-        placeholder="e.g. 1"
+      <label className={labelClass}>Script</label>
+      <select
+        value={currentValue}
+        onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
+        disabled={disabled || loading}
         className={inputClass}
-      />
-      <p className="mt-1.5 text-xs text-slate-500">Add a scripts API later to pick from a list.</p>
+      >
+        <option value="">{loading ? 'Loading scripts…' : 'Select script'}</option>
+        {options.map((s) => (
+          <option key={s.id} value={s.id}>
+            {s.name}
+          </option>
+        ))}
+      </select>
+      {remoteError ? <p className="mt-1.5 text-xs text-rose-600">{remoteError}</p> : null}
     </div>
   );
 }

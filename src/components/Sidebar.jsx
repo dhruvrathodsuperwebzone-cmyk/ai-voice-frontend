@@ -36,9 +36,33 @@ function getNavItemsForRole(role) {
 
 function NavIcon({ d }) {
   return (
-    <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+    <svg
+      className="h-5 w-5 shrink-0 [display:block]"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      strokeWidth={1.8}
+      aria-hidden
+    >
       <path strokeLinecap="round" strokeLinejoin="round" d={d} />
     </svg>
+  );
+}
+
+/** On large screens, labels show when the sidebar is hovered or focus-within (icon-only rail otherwise). */
+function NavLabel({ children }) {
+  return (
+    <span
+      className={`
+        min-w-0 shrink truncate text-sm font-medium
+        transition-[opacity,max-width] duration-200 ease-out
+        lg:max-w-0 lg:overflow-hidden lg:opacity-0
+        lg:group-hover/sidebar:max-w-[11rem] lg:group-hover/sidebar:opacity-100
+        lg:group-focus-within/sidebar:max-w-[11rem] lg:group-focus-within/sidebar:opacity-100
+      `}
+    >
+      {children}
+    </span>
   );
 }
 
@@ -51,45 +75,82 @@ export default function Sidebar({ isOpen, onClose }) {
   return (
     <>
       {isOpen && (
-        <div className="fixed inset-0 bg-slate-900/20 z-40 lg:hidden backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+        <div className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm lg:hidden" onClick={onClose} aria-hidden="true" />
       )}
       <aside
         className={`
-          fixed top-0 left-0 z-50 h-full w-64 transform transition-transform duration-200 ease-out
-          lg:translate-x-0 lg:static lg:z-0
-          bg-white border-r border-slate-200/80 shadow-sm lg:shadow-none
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+          group/sidebar fixed top-0 left-0 z-50 h-full min-h-[100dvh] shrink-0
+          border-r border-violet-500/25 bg-gradient-to-b from-slate-900 via-indigo-950 to-violet-950
+          shadow-xl shadow-indigo-950/40 transition-[width,transform] duration-200 ease-out
+          w-64 -translate-x-full
+          lg:static lg:z-0 lg:h-full lg:translate-x-0 lg:shadow-none
+          lg:w-[4.25rem] lg:hover:w-64 lg:focus-within:w-64
+          ${isOpen ? 'translate-x-0' : ''}
         `}
       >
-        <div className="flex flex-col h-full">
-          <div className="flex items-center gap-3 px-5 h-16 border-b border-slate-100">
-            <Link to="/dashboard" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-md shadow-indigo-500/25">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-40"
+          style={{
+            backgroundImage:
+              'radial-gradient(ellipse 120% 80% at 0% 0%, rgb(139 92 246 / 0.22), transparent 55%), radial-gradient(ellipse 90% 70% at 100% 100%, rgb(99 102 241 / 0.18), transparent 50%)',
+          }}
+          aria-hidden
+        />
+        <div className="relative flex h-full min-h-0 flex-col">
+          <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-4 lg:justify-center lg:gap-0 lg:px-2 lg:group-hover/sidebar:justify-start lg:group-hover/sidebar:gap-3 lg:group-hover/sidebar:px-5 lg:group-focus-within/sidebar:justify-start lg:group-focus-within/sidebar:gap-3 lg:group-focus-within/sidebar:px-5">
+            <Link
+              to="/dashboard"
+              onClick={onClose}
+              className="flex min-w-0 items-center gap-3 rounded-lg py-1 outline-none ring-violet-400/50 transition-opacity hover:opacity-95 focus-visible:ring-2 lg:w-full lg:justify-center lg:group-hover/sidebar:justify-start lg:group-focus-within/sidebar:justify-start"
+              aria-label="Voice Agent home"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 via-indigo-600 to-purple-950 shadow-lg shadow-indigo-950/50 ring-2 ring-white/20">
+                <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                 </svg>
               </div>
-              <span className="font-bold text-slate-900 text-lg tracking-tight">Voice Agent</span>
+              <span
+                className={`
+                  truncate text-lg font-bold tracking-tight text-white
+                  transition-[opacity,max-width] duration-200 ease-out
+                  lg:max-w-0 lg:overflow-hidden lg:opacity-0
+                  lg:group-hover/sidebar:max-w-[10rem] lg:group-hover/sidebar:opacity-100
+                  lg:group-focus-within/sidebar:max-w-[10rem] lg:group-focus-within/sidebar:opacity-100
+                `}
+              >
+                Voice Agent
+              </span>
             </Link>
           </div>
-          <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto">
+          <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-x-hidden overflow-y-auto px-3 py-4 lg:items-center lg:px-2 lg:group-hover/sidebar:items-stretch lg:group-hover/sidebar:px-3 lg:group-focus-within/sidebar:items-stretch lg:group-focus-within/sidebar:px-3">
             {navItems.map((item) => {
-              const active = location.pathname === item.to || (item.to !== '/dashboard' && location.pathname.startsWith(item.to));
+              const active =
+                location.pathname === item.to || (item.to !== '/dashboard' && location.pathname.startsWith(item.to));
               return (
                 <Link
                   key={item.to}
                   to={item.to}
+                  title={item.label}
+                  aria-label={item.label}
                   onClick={onClose}
                   className={`
-                    flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150
+                    flex w-full max-w-full items-center rounded-xl border transition-all duration-150
+                    gap-3 px-3 py-2.5
+                    lg:mx-auto lg:h-11 lg:w-11 lg:shrink-0 lg:justify-center lg:gap-0 lg:p-0
+                    lg:group-hover/sidebar:mx-0 lg:group-hover/sidebar:h-auto lg:group-hover/sidebar:w-full
+                    lg:group-hover/sidebar:justify-start lg:group-hover/sidebar:gap-3 lg:group-hover/sidebar:px-3 lg:group-hover/sidebar:py-2.5
+                    lg:group-focus-within/sidebar:mx-0 lg:group-focus-within/sidebar:h-auto lg:group-focus-within/sidebar:w-full
+                    lg:group-focus-within/sidebar:justify-start lg:group-focus-within/sidebar:gap-3 lg:group-focus-within/sidebar:px-3 lg:group-focus-within/sidebar:py-2.5
                     ${active
-                      ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent'
+                      ? 'border-violet-400/35 bg-gradient-to-r from-violet-500/25 to-indigo-600/20 text-white shadow-md shadow-black/20 lg:bg-gradient-to-br lg:from-violet-500/30 lg:to-indigo-600/25'
+                      : 'border-transparent text-slate-300 hover:border-white/10 hover:bg-white/10 hover:text-white'
                     }
                   `}
                 >
-                  <NavIcon d={item.icon} />
-                  {item.label}
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center lg:h-9 lg:w-9">
+                    <NavIcon d={item.icon} />
+                  </span>
+                  <NavLabel>{item.label}</NavLabel>
                 </Link>
               );
             })}

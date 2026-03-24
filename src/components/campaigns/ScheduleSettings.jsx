@@ -40,10 +40,10 @@ export function scheduleToApi(form) {
   };
 }
 
-const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none";
+const inputClass = "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none";
 const labelClass = "block text-sm font-medium text-slate-700 mb-1";
 
-export default function ScheduleSettings({ schedule, onChange, disabled }) {
+export default function ScheduleSettings({ schedule, onChange, disabled, hideSectionTitle = false }) {
   const [form, setForm] = useState(() => parseSchedule(schedule));
 
   // Sync from parent when schedule prop changes (e.g. campaign loaded)
@@ -75,7 +75,9 @@ export default function ScheduleSettings({ schedule, onChange, disabled }) {
 
   return (
     <div className="space-y-5">
-      <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-500">Schedule</h4>
+      {!hideSectionTitle && (
+        <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-500">Schedule</h4>
+      )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className={labelClass}>Start date</label>
@@ -115,7 +117,7 @@ export default function ScheduleSettings({ schedule, onChange, disabled }) {
                 key={d}
                 type="button"
                 onClick={() => !disabled && toggleDay(d)}
-                className={`rounded-xl px-3.5 py-2 text-sm font-medium transition-colors ${on ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'}`}
+                className={`rounded-xl px-3.5 py-2 text-sm font-medium transition-colors ${on ? 'btn-primary-gradient text-white shadow-sm' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'}`}
               >
                 {label}
               </button>

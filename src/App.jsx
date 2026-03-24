@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './store/authContext';
+import { ToastProvider } from './store/toastContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import AuthLayout from './layouts/AuthLayout';
 import DashboardLayout from './layouts/DashboardLayout';
@@ -24,38 +25,40 @@ import './index.css';
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route path="/" element={<LandingRedirect />} />
-          <Route element={<AuthLayout />}>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          </Route>
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<DashboardPage />} />
-            <Route path="calls" element={<CallsPage />} />
-            <Route path="leads" element={<LeadsPage />} />
-            <Route path="analytics" element={<AnalyticsPage />} />
-            <Route path="campaigns" element={<AdminOnlyRoute><CampaignListPage /></AdminOnlyRoute>} />
-            <Route path="campaigns/new" element={<AdminOnlyRoute><CreateCampaignPage /></AdminOnlyRoute>} />
-            <Route path="campaigns/:id" element={<AdminOnlyRoute><CampaignDetailsPage /></AdminOnlyRoute>} />
-            <Route path="scripts" element={<AdminOnlyRoute><ScriptsPage /></AdminOnlyRoute>} />
-            <Route path="scripts/new" element={<AdminOnlyRoute><ScriptBuilderPage /></AdminOnlyRoute>} />
-            <Route path="scripts/:id" element={<AdminOnlyRoute><ScriptBuilderPage /></AdminOnlyRoute>} />
-            <Route path="payments" element={<AdminOnlyRoute><PaymentsPage /></AdminOnlyRoute>} />
-            <Route path="users" element={<AdminOnlyRoute><UsersPage /></AdminOnlyRoute>} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<LandingRedirect />} />
+            <Route element={<AuthLayout />}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            </Route>
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<DashboardPage />} />
+              <Route path="calls" element={<CallsPage />} />
+              <Route path="leads" element={<LeadsPage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
+              <Route path="campaigns" element={<AdminOnlyRoute><CampaignListPage /></AdminOnlyRoute>} />
+              <Route path="campaigns/new" element={<AdminOnlyRoute><CreateCampaignPage /></AdminOnlyRoute>} />
+              <Route path="campaigns/:id" element={<AdminOnlyRoute><CampaignDetailsPage /></AdminOnlyRoute>} />
+              <Route path="scripts" element={<AdminOnlyRoute><ScriptsPage /></AdminOnlyRoute>} />
+              <Route path="scripts/new" element={<AdminOnlyRoute><ScriptBuilderPage /></AdminOnlyRoute>} />
+              <Route path="scripts/:id" element={<AdminOnlyRoute><ScriptBuilderPage /></AdminOnlyRoute>} />
+              <Route path="payments" element={<AdminOnlyRoute><PaymentsPage /></AdminOnlyRoute>} />
+              <Route path="users" element={<AdminOnlyRoute><UsersPage /></AdminOnlyRoute>} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   );
 }

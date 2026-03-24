@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getUsers, normalizeUsersList, createUser } from '../services/usersService';
 import CreateUserModal from '../components/CreateUserModal';
+import { useToast } from '../store/toastContext';
 
 const PAGE_SIZES = [10, 20, 25, 50, 100];
 const DEFAULT_PAGE_SIZE = 20;
@@ -9,7 +10,7 @@ function RolePill({ role }) {
   const r = (role || '—').toLowerCase();
   const styles = {
     admin: 'bg-violet-100 text-violet-800',
-    agent: 'bg-blue-100 text-blue-800',
+    agent: 'bg-indigo-100 text-indigo-800',
     viewer: 'bg-slate-100 text-slate-600',
   };
   const c = styles[r] || 'bg-slate-100 text-slate-700';
@@ -17,6 +18,7 @@ function RolePill({ role }) {
 }
 
 export default function UsersPage() {
+  const toast = useToast();
   const [users, setUsers] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -46,12 +48,13 @@ export default function UsersPage() {
         err?.message ||
         'Failed to load users';
       setError(msg);
+      toast.error(msg, { title: 'Users load failed' });
       setUsers([]);
       setTotal(0);
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, search, roleFilter]);
+  }, [page, pageSize, search, roleFilter, toast]);
 
   useEffect(() => {
     fetchUsers();
@@ -62,6 +65,15 @@ export default function UsersPage() {
     try {
       await createUser(payload);
       await fetchUsers();
+      toast.success('User created successfully.', { title: 'Success' });
+    } catch (err) {
+      const msg =
+        err?.response?.data?.detail ||
+        err?.response?.data?.message ||
+        err?.message ||
+        'Could not create user';
+      toast.error(msg, { title: 'Create user failed' });
+      throw err;
     } finally {
       setCreateSaving(false);
     }
@@ -104,7 +116,7 @@ export default function UsersPage() {
           <button
             type="button"
             onClick={() => setCreateModalOpen(true)}
-            className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 shadow-sm shadow-indigo-500/20"
+            className="btn-primary-gradient rounded-lg px-3 py-2 text-sm font-medium"
           >
             + Add user
           </button>

@@ -41,7 +41,7 @@ export default function ImportLeadsModal({ onImport, onClose, importing }) {
           {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
           <div className="flex justify-end gap-2 mt-4">
             <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50">Cancel</button>
-            <button type="submit" disabled={!file || importing} className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50">{importing ? 'Importing…' : 'Import'}</button>
+            <button type="submit" disabled={!file || importing} className="btn-primary-gradient rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50">{importing ? 'Importing…' : 'Import'}</button>
           </div>
         </form>
       </div>

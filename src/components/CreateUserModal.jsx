@@ -154,7 +154,7 @@ export default function CreateUserModal({ onClose, onCreated, saving }) {
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 rounded-lg bg-indigo-600 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="btn-primary-gradient rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
             >
               {saving ? 'Creating…' : 'Create user'}
             </button>

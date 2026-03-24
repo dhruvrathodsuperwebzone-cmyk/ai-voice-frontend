@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { authGradientButtonBase } from '../constants/authTheme';
 import { useAuth } from '../store/authContext';
+import { useToast } from '../store/toastContext';
 import { hashPassword } from '../utils/passwordHash';
 
 const inputClass =
-  'w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-800 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none';
+  'w-full rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none lg:text-[15px]';
 
 function EyeIcon({ show }) {
   if (show) {
@@ -29,6 +31,7 @@ export default function LoginForm() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const { login } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/dashboard';
@@ -41,27 +44,31 @@ export default function LoginForm() {
       const hashedPassword = await hashPassword(password);
       const result = await login(email, hashedPassword);
       if (result?.success) {
+        toast.success('Signed in successfully.', { title: 'Success' });
         navigate(from, { replace: true });
       } else {
-        setError(result?.message || 'Login failed');
+        const msg = result?.message || 'Login failed';
+        setError(msg);
+        toast.error(msg, { title: 'Sign in failed' });
       }
     } catch (err) {
       const msg = err.response?.data?.message ?? err.message ?? 'Login failed';
       setError(msg);
+      toast.error(msg, { title: 'Sign in failed' });
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Sign in</h1>
-        <p className="text-slate-500 text-sm mt-1">Use your email and password to continue.</p>
+        <h1 className="text-[1.375rem] font-bold leading-tight text-slate-900 sm:text-2xl">Sign in</h1>
+        <p className="mt-1 text-sm text-slate-500 sm:text-[15px] lg:text-sm">Use your email and password to continue.</p>
       </div>
 
       {error && (
-        <div className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">
+        <div className="flex items-start gap-2 rounded-xl bg-red-50/90 border border-red-100 px-4 py-3 text-sm text-red-800">
           <span className="shrink-0 mt-0.5" aria-hidden>⚠</span>
           <span>{error}</span>
         </div>
@@ -84,12 +91,15 @@ export default function LoginForm() {
           />
         </div>
         <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label htmlFor="login-password" className="block text-sm font-medium text-slate-700">
+          <div className="mb-1.5 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
+            <label htmlFor="login-password" className="text-sm font-medium text-slate-700">
               Password
             </label>
-            <Link to="/forgot-password" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
-              Forgot?
+            <Link
+              to="/forgot-password"
+              className="w-fit text-sm font-medium text-blue-700 hover:text-blue-800 sm:shrink-0"
+            >
+              Forgot password?
             </Link>
           </div>
           <div className="relative">
@@ -106,7 +116,7 @@ export default function LoginForm() {
             <button
               type="button"
               onClick={() => setShowPassword((p) => !p)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               tabIndex={-1}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
@@ -119,14 +129,14 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-xl bg-indigo-600 text-white font-semibold py-3.5 shadow-lg shadow-indigo-500/25 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+        className={`${authGradientButtonBase} min-h-[48px] py-3.5 text-base lg:min-h-0 lg:text-[15px]`}
       >
         {submitting ? 'Signing in…' : 'Sign in'}
       </button>
 
       <p className="text-center text-sm text-slate-500">
         Don&apos;t have an account?{' '}
-        <Link to="/register" className="font-semibold text-indigo-600 hover:text-indigo-700">
+        <Link to="/register" className="font-semibold text-blue-700 hover:text-blue-800">
           Create one
         </Link>
       </p>

@@ -212,7 +212,7 @@ export default function ScriptBuilderPage() {
             type="button"
             onClick={handleSave}
             disabled={saving || loading}
-            className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="btn-primary-gradient rounded-xl px-4 py-2.5 text-sm font-semibold disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save'}
           </button>
