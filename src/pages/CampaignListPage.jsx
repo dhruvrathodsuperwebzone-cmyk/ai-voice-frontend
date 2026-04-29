@@ -1,10 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../store/authContext';
 import { getRole } from '../utils/roleUtils';
+import { PaginationBar } from '../components/PaginationBar';
 import { getCampaigns, deleteCampaign } from '../services/campaignsService';
 import { getScriptNames } from '../services/scriptsService';
-  import CampaignTable from '../components/campaigns/CampaignTable';
+import CampaignTable from '../components/campaigns/CampaignTable';
+import UiSelect from '../components/UiSelect';
+import PageLoader from '../components/PageLoader';
 
 const PAGE_SIZES = [10, 25, 50];
 const DEFAULT_PAGE_SIZE = 10;
@@ -22,6 +25,11 @@ export default function CampaignListPage() {
   const { user } = useAuth();
   const role = getRole(user);
   const isAdmin = role === 'admin';
+
+  const pageSizeOptions = useMemo(
+    () => PAGE_SIZES.map((n) => ({ value: String(n), label: String(n) })),
+    [],
+  );
 
   const [campaigns, setCampaigns] = useState([]);
   const [total, setTotal] = useState(0);
@@ -94,8 +102,6 @@ export default function CampaignListPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const totalCount = total > 0 ? total : campaigns.length;
-  const startRow = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
-  const endRow = totalCount === 0 ? 0 : Math.min(page * pageSize, totalCount);
 
   const fieldInputClass =
     'w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 sm:w-auto sm:min-w-0 sm:bg-white';
@@ -125,15 +131,18 @@ export default function CampaignListPage() {
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 sm:max-w-md sm:bg-white"
           />
-          <select
+          <UiSelect
+            id="campaigns-status-filter"
+            aria-label="Filter campaigns by status"
+            className="w-full sm:max-w-[14rem]"
             value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-            className={`${fieldInputClass} cursor-pointer`}
-          >
-            {STATUS_FILTERS.map(({ value, label }) => (
-              <option key={value || 'all'} value={value}>{label}</option>
-            ))}
-          </select>
+            onChange={(v) => {
+              setStatusFilter(v);
+              setPage(1);
+            }}
+            options={STATUS_FILTERS.map(({ value, label }) => ({ value: String(value), label }))}
+            placeholder="All statuses"
+          />
         </div>
         {isAdmin && (
           <Link
@@ -156,10 +165,7 @@ export default function CampaignListPage() {
 
       <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-md shadow-slate-900/[0.03] ring-1 ring-slate-100/80">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="h-9 w-9 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
-            <p className="mt-3 text-sm text-slate-600">Loading campaigns…</p>
-          </div>
+          <PageLoader message="Loading campaigns…" className="py-16" size="md" />
         ) : (
           <CampaignTable
             campaigns={campaigns}
@@ -173,66 +179,32 @@ export default function CampaignListPage() {
       </div>
 
       {!loading && (campaigns.length > 0 || total > 0) && totalPages >= 1 && (
-        <div className="flex flex-col gap-4 rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-            <span className="text-sm text-slate-600">
-              Showing <strong className="font-semibold text-slate-900">{startRow}-{endRow}</strong> of{' '}
-              <strong className="font-semibold text-slate-900">{totalCount}</strong>
-            </span>
+        <PaginationBar
+          page={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          pageSize={pageSize}
+          onPage={setPage}
+          disabled={loading}
+          className="flex flex-col gap-4 rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
+          beforeNav={
             <div className="flex items-center gap-2">
               <span className="text-sm text-slate-500">Per page</span>
-              <select
-                value={pageSize}
-                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-              >
-                {PAGE_SIZES.map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
+              <UiSelect
+                id="campaigns-page-size"
+                aria-label="Rows per page"
+                className="w-[5.5rem]"
+                value={String(pageSize)}
+                onChange={(v) => {
+                  setPageSize(Number(v));
+                  setPage(1);
+                }}
+                options={pageSizeOptions}
+                placeholder="10"
+              />
             </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setPage(1)}
-              disabled={page <= 1}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent"
-            >
-              First
-            </button>
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent"
-            >
-              Previous
-            </button>
-            <span
-              className="btn-primary-gradient flex h-9 min-w-[2.25rem] items-center justify-center rounded-lg px-3 text-sm font-semibold"
-              aria-current="page"
-            >
-              {page}
-            </span>
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent"
-            >
-              Next
-            </button>
-            <button
-              type="button"
-              onClick={() => setPage(totalPages)}
-              disabled={page >= totalPages}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent"
-            >
-              Last
-            </button>
-          </div>
-        </div>
+          }
+        />
       )}
     </div>
   );

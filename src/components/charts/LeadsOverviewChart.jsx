@@ -8,6 +8,7 @@ import {
   Tooltip,
 } from 'recharts';
 import { dashboardChartShell, DASHBOARD_CHART_HEIGHT } from '../../constants/dashboardTheme';
+import { SpinnerDot } from '../PageLoader';
 
 function normalizePeriodSeries(data) {
   if (!Array.isArray(data)) return [];
@@ -42,7 +43,10 @@ export default function LeadsOverviewChart({ stats, loading, title = 'Leads & pi
     return (
       <div className={shell}>
         <h3 className="mb-1 text-base font-bold text-slate-800">{title}</h3>
-        <p className="mb-3 text-xs text-slate-500">Loading…</p>
+        <div className="mb-3 flex items-center gap-2 text-xs text-slate-500">
+          <SpinnerDot className="border-emerald-600" />
+          <span>Loading…</span>
+        </div>
         <div
           className="mt-auto w-full flex-1 animate-pulse rounded-xl bg-gradient-to-br from-emerald-100/70 to-teal-100/45"
           style={{ minHeight: DASHBOARD_CHART_HEIGHT }}

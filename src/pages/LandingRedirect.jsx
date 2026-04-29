@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../store/authContext';
+import PageLoader from '../components/PageLoader';
 import LandingPage from './LandingPage';
 
 export default function LandingRedirect() {
@@ -7,8 +8,8 @@ export default function LandingRedirect() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-slate-600">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <PageLoader message="Loading…" size="lg" />
       </div>
     );
   }

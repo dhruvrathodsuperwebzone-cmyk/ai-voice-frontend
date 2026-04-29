@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../store/authContext';
+import PageLoader from './PageLoader';
 
 /**
  * Renders children only when user is authenticated; otherwise redirects to /login.
@@ -10,8 +11,8 @@ export function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <div className="text-slate-600">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center bg-slate-100">
+        <PageLoader message="Checking session…" size="lg" />
       </div>
     );
   }

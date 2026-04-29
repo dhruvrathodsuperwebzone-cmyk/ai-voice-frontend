@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../store/authContext';
+import { getRole } from '../utils/roleUtils';
 import { addEdge, useEdgesState, useNodesState } from 'reactflow';
 import FlowEditor from '../components/scripts/FlowEditor';
+import PageLoader from '../components/PageLoader';
 import { createScript, deleteScript, getScriptById, updateScript } from '../services/scriptsService';
 
 function toLinearFlowNodes(steps) {
@@ -63,6 +66,7 @@ export default function ScriptBuilderPage() {
   const { id } = useParams();
   const isNew = id === 'new' || !id;
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [name, setName] = useState(isNew ? 'Hotel AI pitch' : '');
   const [loading, setLoading] = useState(!isNew);
@@ -235,6 +239,10 @@ export default function ScriptBuilderPage() {
     }
   }
 
+  if (getRole(user) === 'viewer') {
+    return <Navigate to="/dashboard/scripts" replace />;
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -350,9 +358,8 @@ export default function ScriptBuilderPage() {
           </div>
 
           {loading ? (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white py-20 shadow-sm">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
-              <p className="mt-3 text-sm text-slate-500">Loading script…</p>
+            <div className="rounded-2xl border border-slate-200 bg-white py-12 shadow-sm">
+              <PageLoader message="Loading script…" className="min-h-[14rem]" size="md" />
             </div>
           ) : builderMode === 'easy' ? (
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">

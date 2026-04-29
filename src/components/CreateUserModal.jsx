@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { hashPassword } from '../utils/passwordHash';
+import UiSelect from './UiSelect';
 
 const ROLES = [
   { value: 'viewer', label: 'Viewer' },
@@ -115,18 +116,15 @@ export default function CreateUserModal({ onClose, onCreated, saving }) {
             <label htmlFor="cu-role" className="block text-xs font-medium text-slate-600 mb-1">
               Role
             </label>
-            <select
+            <UiSelect
               id="cu-role"
+              aria-label="User role"
               value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
-            >
-              {ROLES.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setRole(v)}
+              options={ROLES.map((r) => ({ value: r.value, label: r.label }))}
+              placeholder="Role"
+              dropdownZClass="z-[200]"
+            />
           </div>
           <div>
             <label htmlFor="cu-phone" className="block text-xs font-medium text-slate-600 mb-1">

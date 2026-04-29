@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import { PaginationBar } from '../PaginationBar';
+import PageLoader from '../PageLoader';
 
 const STATUS_STYLES = {
   completed: 'bg-emerald-50 text-emerald-800 ring-emerald-200/70',
@@ -57,14 +59,11 @@ export default function PaymentTable({
     totalCount === 0 || payments.length === 0 ? 0 : (page - 1) * pageSize + 1;
   const endRow =
     totalCount === 0 || payments.length === 0 ? 0 : startRow + payments.length - 1;
-  const canPrev = page > 1;
-  const canNext = page < totalPages && totalCount > 0;
-
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <div className="h-9 w-9 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
-        <p className="mt-3 text-sm text-slate-600">Loading payments…</p>
+        <PageLoader message="Loading payments…" className="py-4" size="md" />
       </div>
     );
   }
@@ -135,42 +134,16 @@ export default function PaymentTable({
       </div>
 
       {onPageChange && payments.length > 0 && (
-        <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/50 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-5">
-          <p className="text-xs text-slate-600">
-            Showing <strong className="font-semibold text-slate-900">{startRow}</strong>
-            –
-            <strong className="font-semibold text-slate-900">{endRow}</strong>
-            {' '}
-            of <strong className="font-semibold text-slate-900">{totalCount}</strong>
-          </p>
-          <div className="flex flex-wrap items-center justify-end gap-3">
-            {onPageChange && (
-              <>
-                <p className="text-xs font-medium text-slate-500">
-                  Page <strong className="text-slate-800">{page}</strong> of <strong className="text-slate-800">{totalPages}</strong>
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onPageChange(Math.max(1, page - 1))}
-                    disabled={!canPrev}
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onPageChange(page + 1)}
-                    disabled={!canNext}
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50"
-                  >
-                    Next
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+        <PaginationBar
+          page={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          pageSize={pageSize}
+          onPage={onPageChange}
+          variant="simple"
+          size="compact"
+          className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+        />
       )}
     </div>
   );

@@ -33,6 +33,50 @@ export async function getUsers(params = {}) {
 }
 
 /**
+ * Normalizes GET /users/names for dropdowns: [{ id, name }, ...]
+ */
+export function normalizeUserNamesList(raw) {
+  const body = raw?.data !== undefined && !Array.isArray(raw) ? raw.data : raw;
+  if (!body) return [];
+  if (Array.isArray(body)) {
+    return body.map((item, i) => {
+      if (typeof item === 'string') {
+        const name = item.trim();
+        return { id: `n-${i}-${name}`, name: name || `User ${i + 1}` };
+      }
+      const name = String(item?.name ?? item?.username ?? item?.email ?? '').trim();
+      return {
+        id: item?.id ?? item?.user_id ?? item?._id ?? `n-${i}`,
+        name: name || `User ${i + 1}`,
+      };
+    });
+  }
+  if (Array.isArray(body?.names)) {
+    return body.names.map((n, i) => ({
+      id: `n-${i}`,
+      name: String(n ?? '').trim() || `User ${i + 1}`,
+    }));
+  }
+  if (Array.isArray(body?.users)) {
+    return body.users.map((u, i) => ({
+      id: u?.id ?? u?.user_id ?? u?._id ?? `n-${i}`,
+      name: String(u?.name ?? u?.username ?? u?.email ?? '').trim() || `User ${i + 1}`,
+    }));
+  }
+  return [];
+}
+
+/**
+ * GET /api/users/names — compact user list (admin; backend enforces role).
+ */
+export async function getUserNames() {
+  const { data } = await api.get('/users/names', {
+    headers: { Accept: 'application/json' },
+  });
+  return data;
+}
+
+/**
  * POST /api/users — create user (admin).
  * Body matches public register: { name, email, password, role?, phone? }.
  * Password should be hashed the same way as /api/register if your API expects a client hash.

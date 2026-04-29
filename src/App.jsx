@@ -23,7 +23,9 @@ import AllLogPage from './pages/AllLogPage';
 import LandingRedirect from './pages/LandingRedirect';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsAndConditionsPage from './pages/TermsAndConditionsPage';
+import AdminAgentRoute from './components/AdminAgentRoute';
 import AdminOnlyRoute from './components/AdminOnlyRoute';
+import AdminOrViewerRoute from './components/AdminOrViewerRoute';
 import AgentOrAdminRoute from './components/AgentOrAdminRoute';
 import AgentsPage from './pages/AgentsPage';
 import './index.css';
@@ -51,7 +53,7 @@ function App() {
               }
             >
               <Route index element={<DashboardPage />} />
-              <Route path="calls" element={<CallsPage />} />
+              <Route path="calls" element={<AdminAgentRoute><CallsPage /></AdminAgentRoute>} />
               <Route path="leads" element={<LeadsPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="calendar" element={<CalendarPage />} />
@@ -62,8 +64,8 @@ function App() {
               <Route path="scripts" element={<AdminOnlyRoute><ScriptsPage /></AdminOnlyRoute>} />
               <Route path="scripts/new" element={<AdminOnlyRoute><ScriptBuilderPage /></AdminOnlyRoute>} />
               <Route path="scripts/:id" element={<AdminOnlyRoute><ScriptBuilderPage /></AdminOnlyRoute>} />
-              <Route path="payments" element={<AdminOnlyRoute><PaymentsPage /></AdminOnlyRoute>} />
-              <Route path="users" element={<AdminOnlyRoute><UsersPage /></AdminOnlyRoute>} />
+              <Route path="payments" element={<PaymentsPage />} />
+              <Route path="users" element={<AdminOrViewerRoute><UsersPage /></AdminOrViewerRoute>} />
               <Route path="agents" element={<AgentOrAdminRoute><AgentsPage /></AgentOrAdminRoute>} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

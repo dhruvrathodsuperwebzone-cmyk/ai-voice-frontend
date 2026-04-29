@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const COMMON_TIMEZONES = ['UTC', 'Asia/Kolkata', 'America/New_York', 'Europe/London', 'Asia/Dubai'];
-
 const DAY_NAMES = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 const DAY_MAP = { mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6, sun: 7 };
 
@@ -18,6 +16,7 @@ const defaultSchedule = () => ({
 function parseSchedule(schedule) {
   if (!schedule || typeof schedule !== 'object') return defaultSchedule();
   const s = { ...defaultSchedule(), ...schedule };
+  s.timezone = 'Asia/Kolkata';
   if (Array.isArray(s.days)) {
     s.days = s.days
       .map((d) => (typeof d === 'string' ? DAY_MAP[d.toLowerCase()] : Number(d)))
@@ -38,6 +37,24 @@ export function scheduleToApi(form) {
     start: form.start_time || '09:00',
     end: form.end_time || '18:00',
   };
+}
+
+/** POST /campaign create shape: top-level dates + nested schedule with call_window_* */
+export function buildCreateCampaignSchedulePayload(schedule) {
+  const f = parseSchedule(schedule);
+  const days = (f.days || []).map((d) => DAY_NAMES[Number(d) - 1]).filter(Boolean);
+  const payload = {
+    schedule: {
+      days,
+      call_window_start: f.start_time || '09:00',
+      call_window_end: f.end_time || '18:00',
+    },
+  };
+  const sd = f.start_date?.trim();
+  const ed = f.end_date?.trim();
+  if (sd) payload.start_date = sd;
+  if (ed) payload.end_date = ed;
+  return payload;
 }
 
 const inputClass = "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none";
@@ -87,14 +104,6 @@ export default function ScheduleSettings({ schedule, onChange, disabled, hideSec
           <label className={labelClass}>End date</label>
           <input type="date" value={form.end_date} onChange={(e) => update('end_date', e.target.value)} disabled={disabled} className={inputClass} />
         </div>
-      </div>
-      <div>
-        <label className={labelClass}>Timezone</label>
-        <select value={form.timezone} onChange={(e) => update('timezone', e.target.value)} disabled={disabled} className={inputClass}>
-          {COMMON_TIMEZONES.map((tz) => (
-            <option key={tz} value={tz}>{tz}</option>
-          ))}
-        </select>
       </div>
       <div className="flex gap-4">
         <div className="flex-1">

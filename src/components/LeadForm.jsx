@@ -1,6 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '../store/authContext';
+import { getRole } from '../utils/roleUtils';
+import {
+  getOutboundAgentsAll,
+  getOutboundCallAgents,
+  normalizeOutboundAgentsList,
+} from '../services/callsService';
+import UiSelect from './UiSelect';
+
+function resolveAgentId(aId) {
+  const parsed = Number(aId);
+  return Number.isNaN(parsed) ? aId : parsed;
+}
 
 export default function LeadForm({ lead, onSave, onCancel, saving }) {
+  const { user } = useAuth();
+  const isAdmin = getRole(user) === 'admin';
+
   const [form, setForm] = useState({
     hotel_name: '',
     owner_name: '',
@@ -10,6 +26,10 @@ export default function LeadForm({ lead, onSave, onCancel, saving }) {
     location: '',
     notes: '',
   });
+  const [outboundAgents, setOutboundAgents] = useState([]);
+  const [agentsLoading, setAgentsLoading] = useState(true);
+  const [outboundAgentId, setOutboundAgentId] = useState('');
+  const [agentError, setAgentError] = useState('');
 
   useEffect(() => {
     if (lead?.id) {
@@ -22,6 +42,8 @@ export default function LeadForm({ lead, onSave, onCancel, saving }) {
         location: lead.location ?? '',
         notes: lead.notes ?? '',
       });
+      const aid = lead.agent_id ?? lead.voice_agent_id ?? lead.outbound_agent_id;
+      setOutboundAgentId(aid != null && String(aid).trim() !== '' ? String(aid) : '');
     } else {
       setForm({
         hotel_name: '',
@@ -32,8 +54,47 @@ export default function LeadForm({ lead, onSave, onCancel, saving }) {
         location: '',
         notes: '',
       });
+      setOutboundAgentId('');
     }
   }, [lead]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadAgents() {
+      setAgentsLoading(true);
+      try {
+        const raw = isAdmin ? await getOutboundAgentsAll() : await getOutboundCallAgents();
+        if (cancelled) return;
+        const list = normalizeOutboundAgentsList(raw);
+        setOutboundAgents(list);
+        if (list.length > 0) {
+          const first = list[0];
+          const id = first?.id ?? first?.agent_id ?? first?._id;
+          if (id != null && String(id) !== '') {
+            setOutboundAgentId((prev) => (prev ? prev : String(id)));
+          }
+        }
+      } catch {
+        if (!cancelled) setOutboundAgents([]);
+      } finally {
+        if (!cancelled) setAgentsLoading(false);
+      }
+    }
+    loadAgents();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin, lead?.id]);
+
+  const outboundAgentOptions = useMemo(() => {
+    if (agentsLoading) return [];
+    if (!outboundAgents.length) return [{ value: '', label: 'No agents available' }];
+    return outboundAgents.map((a) => {
+      const id = a?.id ?? a?.agent_id ?? a?._id;
+      const label = a?.name ?? a?.agent_name ?? a?.bot_name ?? a?.email ?? String(id ?? 'Agent');
+      return { value: String(id ?? ''), label: String(label) };
+    });
+  }, [agentsLoading, outboundAgents]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -42,12 +103,20 @@ export default function LeadForm({ lead, onSave, onCancel, saving }) {
 
   function handleSubmit(e) {
     e.preventDefault();
+    setAgentError('');
+    if (!lead?.id && !outboundAgentId) {
+      setAgentError('Select which agent should handle calls for this lead.');
+      return;
+    }
     const payload = {
       ...form,
       rooms: form.rooms === '' ? undefined : Number(form.rooms) || 0,
       status: lead?.status ?? 'new',
       tags: Array.isArray(lead?.tags) ? lead.tags : [],
     };
+    if (outboundAgentId) {
+      payload.agent_id = resolveAgentId(outboundAgentId);
+    }
     onSave(payload);
   }
 
@@ -59,6 +128,26 @@ export default function LeadForm({ lead, onSave, onCancel, saving }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-2">
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2.5">
+        <div className="sm:col-span-2">
+          <label htmlFor="lead-form-outbound-agent" className={labelClass}>
+            Outbound agent {!lead?.id ? '*' : ''}
+          </label>
+          <UiSelect
+            id="lead-form-outbound-agent"
+            aria-label="Outbound voice agent"
+            className="w-full"
+            value={outboundAgentId}
+            onChange={(v) => {
+              setOutboundAgentId(v);
+              setAgentError('');
+            }}
+            options={outboundAgentOptions}
+            disabled={agentsLoading || saving}
+            placeholder={agentsLoading ? 'Loading agents…' : 'Select agent'}
+            dropdownZClass="z-[200]"
+          />
+          {agentError ? <p className="mt-1 text-[11px] text-red-600">{agentError}</p> : null}
+        </div>
         <div>
           <label className={labelClass}>Hotel name *</label>
           <input name="hotel_name" value={form.hotel_name} onChange={handleChange} required className={inputClass} placeholder="Hotel name" />

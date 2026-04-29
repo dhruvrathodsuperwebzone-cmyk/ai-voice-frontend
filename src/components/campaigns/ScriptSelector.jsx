@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getScriptNames } from '../../services/scriptsService';
+import UiSelect from '../UiSelect';
 
-const inputClass = "w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-800 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none";
 const labelClass = "block text-sm font-medium text-slate-700 mb-1.5";
 
-export default function ScriptSelector({ value, onChange, scripts = [], disabled }) {
+export default function ScriptSelector({ value, onChange, scripts = [], disabled, required = false }) {
   const [remoteScripts, setRemoteScripts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [remoteError, setRemoteError] = useState('');
@@ -48,22 +48,31 @@ export default function ScriptSelector({ value, onChange, scripts = [], disabled
 
   const currentValue = value ?? '';
 
+  const uiOptions = useMemo(() => {
+    const head = {
+      value: '',
+      label: loading ? 'Loading scripts…' : 'Select script',
+      disabled: loading,
+    };
+    const rest = options.map((s) => ({ value: String(s.id), label: s.name }));
+    return [head, ...rest];
+  }, [loading, options]);
+
   return (
     <div>
-      <label className={labelClass}>Script</label>
-      <select
-        value={currentValue}
-        onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
+      <label htmlFor="script-selector-field" className={labelClass}>
+        Script{required ? ' *' : ''}
+      </label>
+      <UiSelect
+        id="script-selector-field"
+        aria-label="Campaign script"
+        value={String(currentValue === null || currentValue === undefined ? '' : currentValue)}
+        onChange={(v) => onChange(v === '' ? null : Number(v))}
+        options={uiOptions}
         disabled={disabled || loading}
-        className={inputClass}
-      >
-        <option value="">{loading ? 'Loading scripts…' : 'Select script'}</option>
-        {options.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.name}
-          </option>
-        ))}
-      </select>
+        placeholder="Select script"
+        dropdownZClass="z-[120]"
+      />
       {remoteError ? <p className="mt-1.5 text-xs text-rose-600">{remoteError}</p> : null}
     </div>
   );

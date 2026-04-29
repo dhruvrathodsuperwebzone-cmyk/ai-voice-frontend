@@ -9,7 +9,7 @@ export default function DashboardLayout() {
   return (
     <div className="flex w-full min-h-0 bg-slate-50">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="relative z-0 flex min-h-0 min-w-0 flex-1 flex-col">
         <Navbar onMenuClick={() => setSidebarOpen((o) => !o)} />
         <main className="p-4 sm:p-6">
           <Outlet />

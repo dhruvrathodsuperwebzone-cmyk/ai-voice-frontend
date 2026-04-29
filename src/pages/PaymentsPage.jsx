@@ -1,11 +1,30 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPaymentLink, enrichPaymentsWithLiveStatus, getPayments } from '../services/paymentService';
+import {
+  createPaymentLink,
+  enrichPaymentsWithLiveStatus,
+  getAdminPayments,
+  getPayments,
+} from '../services/paymentService';
+import { getUserNames, normalizeUserNamesList } from '../services/usersService';
 import RevenueChart from '../components/charts/RevenueChart';
 import PaymentTable from '../components/payments/PaymentTable';
 import InvoiceViewer from '../components/payments/InvoiceViewer';
 import { resolveTotalForPagination } from '../utils/pagination';
+import { useAuth } from '../store/authContext';
+import { isAdmin, isViewer } from '../utils/roleUtils';
+import UiSelect from '../components/UiSelect';
 
 const DEFAULT_PAGE_SIZE = 10;
+
+const PAYMENT_STATUS_OPTIONS = [
+  { value: '', label: 'All' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'paid', label: 'Paid' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'created', label: 'Created' },
+  { value: 'expired', label: 'Expired' },
+  { value: 'failed', label: 'Failed' },
+];
 
 const fieldClass =
   'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none';
@@ -53,6 +72,12 @@ function StatCard({ label, value, accent, icon }) {
 }
 
 export default function PaymentsPage() {
+  const { user } = useAuth();
+  const adminUser = isAdmin(user);
+  const viewerUser = isViewer(user);
+  /** Same list endpoint as admin: GET /api/payments/admin (viewer read-only; no user filter UI). */
+  const paymentsHistoryUsesAdminApi = adminUser || viewerUser;
+
   const [payments, setPayments] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -60,6 +85,8 @@ export default function PaymentsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [statusFilter, setStatusFilter] = useState('');
+  const [userFilter, setUserFilter] = useState('');
+  const [userNameOptions, setUserNameOptions] = useState([]);
   const [selectedPayment, setSelectedPayment] = useState(null);
 
   const [creating, setCreating] = useState(false);
@@ -79,7 +106,8 @@ export default function PaymentsPage() {
     try {
       const params = { page, limit: pageSize };
       if (statusFilter) params.status = statusFilter;
-      const res = await getPayments(params);
+      if (adminUser && userFilter) params.user_id = userFilter;
+      const res = paymentsHistoryUsesAdminApi ? await getAdminPayments(params) : await getPayments(params);
       const { list, total: t } = parsePaymentsResponse(res, page, pageSize);
       if (seq !== fetchSeqRef.current) return;
       setPayments(list);
@@ -97,9 +125,38 @@ export default function PaymentsPage() {
     } finally {
       if (seq === fetchSeqRef.current) setLoading(false);
     }
-  }, [page, pageSize, statusFilter]);
+  }, [page, pageSize, statusFilter, userFilter, adminUser, paymentsHistoryUsesAdminApi]);
 
   useEffect(() => { fetchPayments(); }, [fetchPayments]);
+
+  useEffect(() => {
+    if (!adminUser) {
+      setUserNameOptions([]);
+      setUserFilter('');
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const raw = await getUserNames();
+        if (cancelled) return;
+        setUserNameOptions(normalizeUserNamesList(raw));
+      } catch {
+        if (!cancelled) setUserNameOptions([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [adminUser]);
+
+  const userFilterOptions = useMemo(() => {
+    if (!adminUser) return [];
+    return [
+      { value: '', label: 'All users' },
+      ...userNameOptions.map((u) => ({ value: String(u.id), label: u.name })),
+    ];
+  }, [adminUser, userNameOptions]);
 
   // Lead dropdown removed, so we don't fetch leads anymore.
 
@@ -130,6 +187,7 @@ export default function PaymentsPage() {
 
   async function handleCreateLink(e) {
     e.preventDefault();
+    if (viewerUser) return;
     setCreating(true);
     setError('');
     setCreateSuccess(null);
@@ -165,7 +223,13 @@ export default function PaymentsPage() {
         customer: { name: '', email: '', contact: '' },
       });
       setPage(1);
-      getPayments({ page: 1, limit: pageSize, ...(statusFilter && { status: statusFilter }) })
+      const refreshParams = {
+        page: 1,
+        limit: pageSize,
+        ...(statusFilter && { status: statusFilter }),
+        ...(adminUser && userFilter && { user_id: userFilter }),
+      };
+      (paymentsHistoryUsesAdminApi ? getAdminPayments(refreshParams) : getPayments(refreshParams))
         .then(async (res) => {
           const { list, total: t } = parsePaymentsResponse(res, 1, pageSize);
           setTotal(t);
@@ -195,7 +259,9 @@ export default function PaymentsPage() {
               </span>
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
-              Create Razorpay links, track status, and review revenue from the payments on this page.
+              {viewerUser
+                ? 'View payment status and history. Read-only access.'
+                : 'Create Razorpay links, track status, and review revenue from the payments on this page.'}
             </p>
           </div>
           <div className="flex flex-wrap gap-2 lg:justify-end">
@@ -219,7 +285,7 @@ export default function PaymentsPage() {
         </div>
       )}
 
-      {createSuccess && (
+      {createSuccess && !viewerUser && (
         <div className="overflow-hidden rounded-2xl border border-emerald-200/80 bg-white shadow-md shadow-emerald-900/[0.04] ring-1 ring-emerald-100/60">
           <div className="border-b border-emerald-100/90 bg-gradient-to-r from-emerald-50/95 via-white to-teal-50/40 px-5 py-4 sm:px-6">
             <div className="flex items-start gap-3">
@@ -279,82 +345,84 @@ export default function PaymentsPage() {
         </div>
       )}
 
-      <div className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-lg shadow-slate-900/[0.04] ring-1 ring-slate-100/90">
-        <div
-          className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-violet-500 via-indigo-500 to-emerald-500"
-          aria-hidden
-        />
-        <div className="relative border-b border-slate-100 bg-gradient-to-r from-slate-50/90 via-white to-violet-50/25 px-5 py-5 sm:px-7">
-          <h2 className="text-lg font-bold text-slate-900">Create payment link</h2>
-          <p className="mt-1 text-sm text-slate-600">Send a Razorpay link to a customer.</p>
+      {!viewerUser && (
+        <div className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-lg shadow-slate-900/[0.04] ring-1 ring-slate-100/90">
+          <div
+            className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-violet-500 via-indigo-500 to-emerald-500"
+            aria-hidden
+          />
+          <div className="relative border-b border-slate-100 bg-gradient-to-r from-slate-50/90 via-white to-violet-50/25 px-5 py-5 sm:px-7">
+            <h2 className="text-lg font-bold text-slate-900">Create payment link</h2>
+            <p className="mt-1 text-sm text-slate-600">Send a Razorpay link to a customer.</p>
+          </div>
+          <form onSubmit={handleCreateLink} className="relative space-y-4 p-5 sm:p-7">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className={labelClass}>Amount</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={form.amount}
+                  onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+                  className={fieldClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Description</label>
+                <input
+                  type="text"
+                  value={form.description}
+                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                  placeholder="e.g. AI Receptionist Setup"
+                  className={fieldClass}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <label className={labelClass}>Customer name</label>
+                <input
+                  type="text"
+                  value={form.customer?.name ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, customer: { ...f.customer, name: e.target.value } }))}
+                  placeholder="Rahul Sharma"
+                  className={fieldClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Email</label>
+                <input
+                  type="email"
+                  value={form.customer?.email ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, customer: { ...f.customer, email: e.target.value } }))}
+                  placeholder="rahul@example.com"
+                  className={fieldClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Contact</label>
+                <input
+                  type="text"
+                  value={form.customer?.contact ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, customer: { ...f.customer, contact: e.target.value } }))}
+                  placeholder="+919876543210"
+                  className={fieldClass}
+                />
+              </div>
+            </div>
+            {/* Lead + Send SMS removed. Currency is always INR. */}
+            <div className="border-t border-slate-100 pt-5">
+              <button
+                type="submit"
+                disabled={creating}
+                className="btn-primary-gradient w-full rounded-xl px-5 py-3 text-sm font-semibold shadow-md shadow-indigo-900/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2.5 sm:w-auto"
+              >
+                {creating ? 'Creating…' : 'Create payment link'}
+              </button>
+            </div>
+          </form>
         </div>
-        <form onSubmit={handleCreateLink} className="relative space-y-4 p-5 sm:p-7">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className={labelClass}>Amount</label>
-              <input
-                type="number"
-                min={1}
-                value={form.amount}
-                onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                className={fieldClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Description</label>
-              <input
-                type="text"
-                value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                placeholder="e.g. AI Receptionist Setup"
-                className={fieldClass}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div>
-              <label className={labelClass}>Customer name</label>
-              <input
-                type="text"
-                value={form.customer?.name ?? ''}
-                onChange={(e) => setForm((f) => ({ ...f, customer: { ...f.customer, name: e.target.value } }))}
-                placeholder="Rahul Sharma"
-                className={fieldClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Email</label>
-              <input
-                type="email"
-                value={form.customer?.email ?? ''}
-                onChange={(e) => setForm((f) => ({ ...f, customer: { ...f.customer, email: e.target.value } }))}
-                placeholder="rahul@example.com"
-                className={fieldClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Contact</label>
-              <input
-                type="text"
-                value={form.customer?.contact ?? ''}
-                onChange={(e) => setForm((f) => ({ ...f, customer: { ...f.customer, contact: e.target.value } }))}
-                placeholder="+919876543210"
-                className={fieldClass}
-              />
-            </div>
-          </div>
-          {/* Lead + Send SMS removed. Currency is always INR. */}
-          <div className="border-t border-slate-100 pt-5">
-            <button
-              type="submit"
-              disabled={creating}
-              className="btn-primary-gradient w-full rounded-xl px-5 py-3 text-sm font-semibold shadow-md shadow-indigo-900/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2.5 sm:w-auto"
-            >
-              {creating ? 'Creating…' : 'Create payment link'}
-            </button>
-          </div>
-        </form>
-      </div>
+      )}
 
       <section className="space-y-3 sm:space-y-4" aria-labelledby="payments-overview-heading">
         <h2 id="payments-overview-heading" className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-800/90">
@@ -401,23 +469,45 @@ export default function PaymentsPage() {
         <div className="flex flex-col gap-4 border-b border-slate-100 bg-gradient-to-r from-slate-50/80 via-white to-indigo-50/20 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div>
             <h2 className="text-base font-bold text-slate-900">Payment history</h2>
-            <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">Filter by status and open invoices from the list.</p>
+            <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">
+              {adminUser
+                ? 'Filter by user, status, and open invoices from the list.'
+                : 'Filter by status and open invoices from the list.'}
+            </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-slate-500">Status</span>
-            <select
-              value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
-            >
-              <option value="">All</option>
-              <option value="completed">Completed</option>
-              <option value="paid">Paid</option>
-              <option value="pending">Pending</option>
-              <option value="created">Created</option>
-              <option value="expired">Expired</option>
-              <option value="failed">Failed</option>
-            </select>
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            {adminUser && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-slate-500 whitespace-nowrap">User</span>
+                <UiSelect
+                  id="payments-user-filter"
+                  aria-label="Filter payments by user"
+                  className="min-w-[10.5rem]"
+                  value={userFilter}
+                  onChange={(v) => {
+                    setUserFilter(v);
+                    setPage(1);
+                  }}
+                  options={userFilterOptions}
+                  placeholder="All users"
+                />
+              </div>
+            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-slate-500 whitespace-nowrap">Status</span>
+              <UiSelect
+                id="payments-status-filter"
+                aria-label="Filter payments by status"
+                className="min-w-[9.5rem]"
+                value={statusFilter}
+                onChange={(v) => {
+                  setStatusFilter(v);
+                  setPage(1);
+                }}
+                options={PAYMENT_STATUS_OPTIONS}
+                placeholder="All"
+              />
+            </div>
           </div>
         </div>
         <PaymentTable

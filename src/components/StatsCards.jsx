@@ -15,11 +15,11 @@ const agentCardsConfig = [
     iconBg: 'bg-gradient-to-br from-violet-500 to-indigo-600 text-white',
   },
   {
-    label: 'Assigned leads',
-    valueKey: 'assignedLeads',
-    altKeys: ['assigned_leads'],
-    format: (v) => (v != null ? Number(v).toLocaleString() : '0'),
-    icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+    label: 'Revenue',
+    valueKey: 'revenue',
+    altKeys: ['totalRevenue', 'total_revenue'],
+    format: (v) => (typeof v === 'number' ? `₹${v.toLocaleString()}` : v ?? '₹0'),
+    icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
     accent: 'border-l-emerald-500 bg-gradient-to-br from-emerald-50/70 to-white',
     iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white',
   },
@@ -63,15 +63,6 @@ const cardsConfig = [
     iconBg: 'bg-gradient-to-br from-purple-500 to-violet-600 text-white',
   },
   {
-    label: 'Active Campaigns',
-    valueKey: 'activeCampaigns',
-    altKeys: ['active_campaigns', 'campaigns', 'totalCampaigns'],
-    format: (v) => (v != null ? Number(v).toLocaleString() : '0'),
-    icon: 'M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z',
-    accent: 'border-l-sky-500 bg-gradient-to-br from-sky-50/70 to-white',
-    iconBg: 'bg-gradient-to-br from-sky-500 to-indigo-500 text-white',
-  },
-  {
     label: 'Conversion Rate',
     valueKey: 'conversionRate',
     altKeys: ['conversion_rate'],
@@ -103,7 +94,7 @@ export default function StatsCards({ stats, loading, variant }) {
   const gridClass = statsGridClass(config.length);
 
   if (loading) {
-    const skeletonCount = variant === 'agent' ? 3 : 5;
+    const skeletonCount = variant === 'agent' ? 3 : 4;
     return (
       <div className={statsGridClass(skeletonCount)}>
         {Array.from({ length: skeletonCount }, (_, i) => i + 1).map((i) => (

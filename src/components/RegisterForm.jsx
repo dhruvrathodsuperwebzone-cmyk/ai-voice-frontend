@@ -4,6 +4,13 @@ import { authGradientButtonBase } from '../constants/authTheme';
 import { useAuth } from '../store/authContext';
 import { useToast } from '../store/toastContext';
 import { hashPassword } from '../utils/passwordHash';
+import UiSelect from './UiSelect';
+
+const REGISTER_ROLE_OPTIONS = [
+  { value: 'admin', label: 'Admin' },
+  { value: 'agent', label: 'Agent' },
+  { value: 'viewer', label: 'Viewer' },
+];
 
 const inputClass =
   'w-full rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none lg:rounded-lg lg:px-3 lg:py-2.5 lg:text-sm';
@@ -158,16 +165,16 @@ export default function RegisterForm() {
         <label htmlFor="reg-role" className="mb-1.5 block text-sm font-medium text-slate-700 lg:mb-1 lg:text-xs">
           Role
         </label>
-        <select
+        <UiSelect
           id="reg-role"
+          aria-label="Account role"
+          className="w-full"
           value={role}
-          onChange={(e) => setRole(e.target.value)}
-          className={inputClass}
-        >
-          <option value="admin">Admin</option>
-          <option value="agent">Agent</option>
-          <option value="viewer">Viewer</option>
-        </select>
+          onChange={(v) => setRole(v)}
+          options={REGISTER_ROLE_OPTIONS}
+          placeholder="Role"
+          dropdownZClass="z-[200]"
+        />
       </div>
       <button
         type="submit"

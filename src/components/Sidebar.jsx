@@ -1,83 +1,86 @@
-import { Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  HiOutlineArrowRightOnRectangle,
+  HiOutlineCalendar,
+  HiOutlineChartBar,
+  HiOutlineChevronLeft,
+  HiOutlineChevronRight,
+  HiOutlineClipboardDocumentList,
+  HiOutlineCpuChip,
+  HiOutlineCreditCard,
+  HiOutlineHome,
+  HiOutlinePhone,
+  HiOutlineUserGroup,
+} from 'react-icons/hi2';
 import { useAuth } from '../store/authContext';
 import { getRole } from '../utils/roleUtils';
 
-const ICONS = {
-  dashboard: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
-  calls: 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z',
-  leads: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
-  campaigns: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
-  analytics: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
-  calendar: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-  allLog: 'M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z',
-  scripts: 'M4 6a2 2 0 012-2h7a2 2 0 012 2v2h3a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm11 4V6a1 1 0 00-1-1H6a1 1 0 00-1 1v14a1 1 0 001 1h12a1 1 0 001-1v-8a1 1 0 00-1-1h-3z',
-  payments: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z',
-  users: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
-};
+const navIconClass = 'h-5 w-5 shrink-0 [display:block]';
 
 const allNavItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: ICONS.dashboard },
-  { to: '/dashboard/calls', label: 'Calls', icon: ICONS.calls },
-  { to: '/dashboard/leads', label: 'Leads', icon: ICONS.leads },
-  { to: '/dashboard/analytics', label: 'Analytics', icon: ICONS.analytics },
-  { to: '/dashboard/calendar', label: 'Calendar', icon: ICONS.calendar },
-  { to: '/dashboard/all-log', label: 'Call Log', icon: ICONS.allLog },
-  { to: '/dashboard/campaigns', label: 'Campaigns', icon: ICONS.campaigns },
-  // { to: '/dashboard/scripts', label: 'Scripts', icon: ICONS.scripts },
-  { to: '/dashboard/payments', label: 'Payments', icon: ICONS.payments },
-  { to: '/dashboard/agents', label: 'Agents', icon: ICONS.users },
-  { to: '/dashboard/users', label: 'Users', icon: ICONS.users },
+  { to: '/dashboard', label: 'Dashboard', icon: HiOutlineHome },
+  { to: '/dashboard/calls', label: 'Calls', icon: HiOutlinePhone },
+  { to: '/dashboard/leads', label: 'Leads', icon: HiOutlineUserGroup },
+  { to: '/dashboard/analytics', label: 'Analytics', icon: HiOutlineChartBar },
+  { to: '/dashboard/calendar', label: 'Calendar', icon: HiOutlineCalendar },
+  { to: '/dashboard/all-log', label: 'Call Log', icon: HiOutlineClipboardDocumentList },
+  { to: '/dashboard/payments', label: 'Payments', icon: HiOutlineCreditCard },
+  { to: '/dashboard/agents', label: 'Agents', icon: HiOutlineCpuChip },
+  { to: '/dashboard/users', label: 'Users', icon: HiOutlineUserGroup },
 ];
+
+const viewerHiddenNavPaths = new Set(['/dashboard/calls']);
 
 function getNavItemsForRole(role) {
   if (role === 'viewer') {
-    return allNavItems.filter((i) => ['/dashboard', '/dashboard/calls', '/dashboard/leads', '/dashboard/analytics', '/dashboard/calendar', '/dashboard/all-log'].includes(i.to));
+    /** Same as admin except hidden items (sidebar + matching route guards). */
+    return allNavItems.filter((i) => !viewerHiddenNavPaths.has(i.to));
   }
   if (role === 'agent') {
     return allNavItems.filter((i) =>
-      ['/dashboard', '/dashboard/calls', '/dashboard/leads', '/dashboard/agents', '/dashboard/calendar', '/dashboard/all-log'].includes(i.to)
+      [
+        '/dashboard',
+        '/dashboard/calls',
+        '/dashboard/leads',
+        '/dashboard/agents',
+        '/dashboard/calendar',
+        '/dashboard/all-log',
+        '/dashboard/payments',
+      ].includes(i.to)
     );
   }
   return allNavItems;
 }
 
-function NavIcon({ d }) {
+function NavLabel({ children, collapsed }) {
   return (
-    <svg
-      className="h-5 w-5 shrink-0 [display:block]"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      strokeWidth={1.8}
-      aria-hidden
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d={d} />
-    </svg>
-  );
-}
-
-/** On large screens, labels show when the sidebar is hovered or focus-within (icon-only rail otherwise). */
-function NavLabel({ children }) {
-  return (
-    <span
-      className={`
-        min-w-0 shrink truncate text-sm font-medium
-        transition-[opacity,max-width] duration-200 ease-out
-        lg:max-w-0 lg:overflow-hidden lg:opacity-0
-        lg:group-hover/sidebar:max-w-[11rem] lg:group-hover/sidebar:opacity-100
-        lg:group-focus-within/sidebar:max-w-[11rem] lg:group-focus-within/sidebar:opacity-100
-      `}
-    >
-      {children}
-    </span>
+    <span className={`min-w-0 shrink truncate text-sm font-medium ${collapsed ? 'lg:hidden' : ''}`}>{children}</span>
   );
 }
 
 export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation();
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const role = getRole(user);
   const navItems = getNavItemsForRole(role);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+
+  const displayName = user?.name?.trim() || user?.email || 'User';
+  const parts = displayName.split(/\s+/).filter(Boolean);
+  const initials =
+    parts.length >= 2
+      ? `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase()
+      : displayName.slice(0, 2).toUpperCase();
+
+  const CollapseChevron = desktopCollapsed ? HiOutlineChevronRight : HiOutlineChevronLeft;
+
+  function handleLogout() {
+    logout();
+    navigate('/login', { replace: true });
+    onClose?.();
+  }
 
   return (
     <>
@@ -86,12 +89,12 @@ export default function Sidebar({ isOpen, onClose }) {
       )}
       <aside
         className={`
-          group/sidebar fixed top-0 left-0 z-50 h-full min-h-[100dvh] shrink-0
+          fixed top-0 left-0 z-50 h-full min-h-[100dvh] shrink-0
           border-r border-violet-500/25 bg-gradient-to-b from-slate-900 via-indigo-950 to-violet-950
           shadow-xl shadow-indigo-950/40 transition-[width,transform] duration-200 ease-out
           w-64 -translate-x-full
-          lg:sticky lg:top-0 lg:z-30 lg:h-[100dvh] lg:max-h-[100dvh] lg:min-h-0 lg:translate-x-0 lg:overflow-hidden lg:shadow-none
-          lg:w-[4.25rem] lg:hover:w-64 lg:focus-within:w-64
+          lg:sticky lg:top-0 lg:z-[41] lg:h-[100dvh] lg:max-h-[100dvh] lg:min-h-0 lg:translate-x-0 lg:overflow-visible lg:shadow-none
+          ${desktopCollapsed ? 'lg:w-[4.25rem]' : 'lg:w-64'}
           ${isOpen ? 'translate-x-0' : ''}
         `}
       >
@@ -104,11 +107,11 @@ export default function Sidebar({ isOpen, onClose }) {
           aria-hidden
         />
         <div className="relative flex h-full min-h-0 flex-col">
-          <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-4 lg:justify-center lg:gap-0 lg:px-2 lg:group-hover/sidebar:justify-start lg:group-hover/sidebar:gap-3 lg:group-hover/sidebar:px-5 lg:group-focus-within/sidebar:justify-start lg:group-focus-within/sidebar:gap-3 lg:group-focus-within/sidebar:px-5">
+          <div className="relative flex shrink-0 items-center border-b border-white/10 px-3 py-3 sm:px-4">
             <Link
               to="/dashboard"
               onClick={onClose}
-              className="flex min-w-0 items-center gap-3 rounded-lg py-1 outline-none ring-violet-400/50 transition-opacity hover:opacity-95 focus-visible:ring-2 lg:w-full lg:justify-center lg:group-hover/sidebar:justify-start lg:group-focus-within/sidebar:justify-start"
+              className={`flex min-w-0 w-full items-center gap-3 rounded-lg py-0.5 outline-none ring-violet-400/50 transition-opacity hover:opacity-95 focus-visible:ring-2 ${desktopCollapsed ? 'lg:justify-center lg:gap-0' : ''}`}
               aria-label="Voice Agent home"
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/95 p-1 shadow-lg shadow-indigo-950/50 ring-2 ring-white/25">
@@ -122,22 +125,37 @@ export default function Sidebar({ isOpen, onClose }) {
                 />
               </div>
               <span
-                className={`
-                  truncate text-lg font-bold tracking-tight text-white
-                  transition-[opacity,max-width] duration-200 ease-out
-                  lg:max-w-0 lg:overflow-hidden lg:opacity-0
-                  lg:group-hover/sidebar:max-w-[10rem] lg:group-hover/sidebar:opacity-100
-                  lg:group-focus-within/sidebar:max-w-[10rem] lg:group-focus-within/sidebar:opacity-100
-                `}
+                className={`min-w-0 truncate text-base font-bold leading-tight tracking-tight text-white sm:text-lg ${desktopCollapsed ? 'lg:hidden' : ''}`}
               >
                 Voice Agent
               </span>
             </Link>
+            <button
+              type="button"
+              onClick={() => setDesktopCollapsed((c) => !c)}
+              className={`
+                pointer-events-auto absolute top-1/2 left-full z-[50] hidden h-10 w-10 min-h-10 min-w-10 shrink-0
+                -translate-x-1/2 -translate-y-1/2
+                box-border items-center justify-center rounded-full border border-slate-800 bg-[#0a0a0a] p-0 opacity-100
+                text-white shadow-[0_2px_4px_rgb(0_0_0/0.4),0_8px_20px_-8px_rgb(0_0_0/0.35)]
+                transition-[border-color,color,box-shadow,transform,background-color] duration-200 ease-out
+                hover:border-slate-600 hover:bg-[#171717] hover:text-white
+                active:scale-[0.96]
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/55 focus-visible:ring-offset-0
+                lg:inline-flex
+              `}
+              aria-expanded={!desktopCollapsed}
+              aria-label={desktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              <CollapseChevron className="block h-4 w-4 shrink-0" strokeWidth={2.15} aria-hidden />
+            </button>
           </div>
-          <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-x-hidden overflow-y-auto px-3 py-4 max-lg:overscroll-y-contain lg:overflow-y-visible lg:overflow-x-hidden lg:items-center lg:px-2 lg:group-hover/sidebar:items-stretch lg:group-hover/sidebar:px-3 lg:group-focus-within/sidebar:items-stretch lg:group-focus-within/sidebar:px-3">
+
+          <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden px-2 py-3 max-lg:overscroll-y-contain sm:px-3">
             {navItems.map((item) => {
               const active =
                 location.pathname === item.to || (item.to !== '/dashboard' && location.pathname.startsWith(item.to));
+              const Icon = item.icon;
               return (
                 <Link
                   key={item.to}
@@ -148,25 +166,64 @@ export default function Sidebar({ isOpen, onClose }) {
                   className={`
                     flex w-full max-w-full items-center rounded-xl border transition-all duration-150
                     gap-3 px-3 py-2.5
-                    lg:mx-auto lg:h-11 lg:w-11 lg:shrink-0 lg:justify-center lg:gap-0 lg:p-0
-                    lg:group-hover/sidebar:mx-0 lg:group-hover/sidebar:h-auto lg:group-hover/sidebar:w-full
-                    lg:group-hover/sidebar:justify-start lg:group-hover/sidebar:gap-3 lg:group-hover/sidebar:px-3 lg:group-hover/sidebar:py-2.5
-                    lg:group-focus-within/sidebar:mx-0 lg:group-focus-within/sidebar:h-auto lg:group-focus-within/sidebar:w-full
-                    lg:group-focus-within/sidebar:justify-start lg:group-focus-within/sidebar:gap-3 lg:group-focus-within/sidebar:px-3 lg:group-focus-within/sidebar:py-2.5
+                    ${desktopCollapsed ? 'lg:justify-center lg:gap-0 lg:px-2' : ''}
                     ${active
-                      ? 'border-violet-400/35 bg-gradient-to-r from-violet-500/25 to-indigo-600/20 text-white shadow-md shadow-black/20 lg:bg-gradient-to-br lg:from-violet-500/30 lg:to-indigo-600/25'
+                      ? 'border-violet-400/35 bg-gradient-to-r from-violet-500/25 to-indigo-600/20 text-white shadow-md shadow-black/20'
                       : 'border-transparent text-slate-300 hover:border-white/10 hover:bg-white/10 hover:text-white'
                     }
                   `}
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center lg:h-9 lg:w-9">
-                    <NavIcon d={item.icon} />
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center">
+                    <Icon className={navIconClass} strokeWidth={1.8} aria-hidden />
                   </span>
-                  <NavLabel>{item.label}</NavLabel>
+                  <NavLabel collapsed={desktopCollapsed}>{item.label}</NavLabel>
                 </Link>
               );
             })}
           </nav>
+
+          <div className="shrink-0 border-t border-white/10 px-2 py-3 sm:px-3">
+            <div className={desktopCollapsed ? 'max-lg:block lg:hidden' : 'block'}>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3 shadow-inner shadow-black/20">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-indigo-600 to-purple-800 text-xs font-bold text-white ring-2 ring-white/20">
+                    {initials}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-white">{displayName}</p>
+                    <p className="mt-0.5 truncate text-xs text-slate-400">{user?.email || role || '—'}</p>
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40"
+              >
+                <HiOutlineArrowRightOnRectangle className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+                Sign out
+              </button>
+            </div>
+            {desktopCollapsed ? (
+              <div className="hidden flex-col items-center gap-2 lg:flex">
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-indigo-600 to-purple-800 text-xs font-bold text-white ring-2 ring-white/20"
+                  title={displayName}
+                >
+                  {initials}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40"
+                  title="Sign out"
+                  aria-label="Sign out"
+                >
+                  <HiOutlineArrowRightOnRectangle className="h-4 w-4" strokeWidth={2} aria-hidden />
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
       </aside>
     </>

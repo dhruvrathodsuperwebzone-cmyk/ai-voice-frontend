@@ -68,3 +68,13 @@ export async function getPayments(params = {}) {
   const { data } = await api.get('/payments', { params });
   return data;
 }
+
+/**
+ * GET /api/payments/admin — admin-scoped list (query string).
+ * Example: /api/payments/admin?page=1&limit=10&user_id=5&status=pending
+ * @param {Object} params - { page, limit, status?, user_id?, lead_id?, from_date?, to_date? }
+ */
+export async function getAdminPayments(params = {}) {
+  const { data } = await api.get('/payments/admin', { params });
+  return data;
+}

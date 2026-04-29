@@ -19,3 +19,8 @@ export function isAgent(user) {
 export function isAdmin(user) {
   return getRole(user) === 'admin';
 }
+
+export {
+  VIEWER_READ_ONLY_API_PATHS,
+  VIEWER_READ_ONLY_API_PATH_COUNT,
+} from '../constants/viewerReadOnlyApiInventory';

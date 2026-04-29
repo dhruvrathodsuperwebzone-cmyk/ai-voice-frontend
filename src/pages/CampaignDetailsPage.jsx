@@ -1,10 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../store/authContext';
+import { getRole } from '../utils/roleUtils';
 import { getCampaignById, updateCampaign, deleteCampaign } from '../services/campaignsService';
 import { getLeads } from '../services/leadsService';
 import { getScripts } from '../services/scriptsService';
 import CampaignForm from '../components/campaigns/CampaignForm';
 import DeleteCampaignConfirmModal from '../components/campaigns/DeleteCampaignConfirmModal';
+import PageLoader from '../components/PageLoader';
 
 function formatSchedule(schedule) {
   if (!schedule || typeof schedule !== 'object') return '—';
@@ -44,6 +47,8 @@ function SummaryTile({ label, value, icon }) {
 export default function CampaignDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isViewer = getRole(user) === 'viewer';
   const [campaign, setCampaign] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -132,9 +137,8 @@ export default function CampaignDetailsPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto flex max-w-7xl flex-col items-center justify-center rounded-2xl border border-slate-200/90 bg-white py-24 shadow-md shadow-slate-900/[0.03] ring-1 ring-slate-100/80">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
-        <p className="mt-4 text-sm text-slate-600">Loading campaign…</p>
+      <div className="mx-auto max-w-7xl rounded-2xl border border-slate-200/90 bg-white py-24 shadow-md shadow-slate-900/[0.03] ring-1 ring-slate-100/80">
+        <PageLoader message="Loading campaign…" className="min-h-[12rem]" size="lg" />
       </div>
     );
   }
@@ -196,13 +200,15 @@ export default function CampaignDetailsPage() {
               )}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setDeleteModalOpen(true)}
-            className="shrink-0 rounded-xl border border-red-200/90 bg-white/90 px-4 py-3 text-sm font-semibold text-red-600 shadow-sm ring-1 ring-red-100/50 transition-colors hover:bg-red-50 sm:py-2.5"
-          >
-            Delete campaign
-          </button>
+          {!isViewer && (
+            <button
+              type="button"
+              onClick={() => setDeleteModalOpen(true)}
+              className="shrink-0 rounded-xl border border-red-200/90 bg-white/90 px-4 py-3 text-sm font-semibold text-red-600 shadow-sm ring-1 ring-red-100/50 transition-colors hover:bg-red-50 sm:py-2.5"
+            >
+              Delete campaign
+            </button>
+          )}
         </div>
       </header>
 
@@ -262,30 +268,36 @@ export default function CampaignDetailsPage() {
         </div>
       </section>
 
-      <div className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-lg shadow-slate-900/[0.04] ring-1 ring-slate-100/90">
-        <div
-          className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-violet-500 via-indigo-500 to-purple-600"
-          aria-hidden
-        />
-        <div className="relative border-b border-slate-100 bg-gradient-to-r from-slate-50/80 via-white to-violet-50/30 px-5 py-5 sm:px-7 sm:py-6">
-          <h2 className="text-lg font-bold text-slate-900 sm:text-xl">Edit campaign</h2>
-          <p className="mt-1 text-sm text-slate-600">Update script, schedule, timezone, status, and lead assignments.</p>
-        </div>
-        <div className="p-5 sm:p-7 lg:p-8">
-          <CampaignForm
-            campaign={campaign}
-            scripts={scripts}
-            onSave={handleSave}
-            onCancel={() => navigate('/dashboard/campaigns')}
-            saving={saving}
-            showSchedule
-            showLeadList
-            leadList={leadList}
-            onLeadListChange={setLeadList}
-            availableLeads={availableLeads}
+      {!isViewer ? (
+        <div className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-lg shadow-slate-900/[0.04] ring-1 ring-slate-100/90">
+          <div
+            className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-violet-500 via-indigo-500 to-purple-600"
+            aria-hidden
           />
+          <div className="relative border-b border-slate-100 bg-gradient-to-r from-slate-50/80 via-white to-violet-50/30 px-5 py-5 sm:px-7 sm:py-6">
+            <h2 className="text-lg font-bold text-slate-900 sm:text-xl">Edit campaign</h2>
+            <p className="mt-1 text-sm text-slate-600">Update script, schedule, timezone, status, and lead assignments.</p>
+          </div>
+          <div className="p-5 sm:p-7 lg:p-8">
+            <CampaignForm
+              campaign={campaign}
+              scripts={scripts}
+              onSave={handleSave}
+              onCancel={() => navigate('/dashboard/campaigns')}
+              saving={saving}
+              showSchedule
+              showLeadList
+              leadList={leadList}
+              onLeadListChange={setLeadList}
+              availableLeads={availableLeads}
+            />
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-200/90 bg-slate-50/80 px-5 py-6 text-sm text-slate-600 ring-1 ring-slate-100/80 sm:px-7">
+          This campaign is <span className="font-semibold text-slate-800">read-only</span> for your role. Summary tiles above reflect the latest saved configuration.
+        </div>
+      )}
 
       <DeleteCampaignConfirmModal
         open={deleteModalOpen}

@@ -3,17 +3,17 @@ import { useAuth } from '../store/authContext';
 import { getRole } from '../utils/roleUtils';
 
 /**
- * Renders children for agent, admin, or viewer (viewer: read-only; see AgentsPage).
+ * Admin full access; viewer may open the same routes with read-only UI (mutations hidden in pages).
+ * Agents are redirected to the dashboard.
  */
-export default function AgentOrAdminRoute({ children }) {
+export default function AdminOrViewerRoute({ children }) {
   const { user } = useAuth();
   const location = useLocation();
   const role = getRole(user);
 
-  if (role !== 'agent' && role !== 'admin' && role !== 'viewer') {
+  if (role !== 'admin' && role !== 'viewer') {
     return <Navigate to="/dashboard" replace state={{ from: location }} />;
   }
 
   return children;
 }
-

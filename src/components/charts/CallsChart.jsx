@@ -8,6 +8,7 @@ import {
   Tooltip,
 } from 'recharts';
 import { dashboardChartShell, DASHBOARD_CHART_HEIGHT } from '../../constants/dashboardTheme';
+import { SpinnerDot } from '../PageLoader';
 
 function normalizeToRecharts(data) {
   if (!Array.isArray(data)) {
@@ -31,7 +32,10 @@ export default function CallsChart({ data, loading, title = 'Calls per month' })
     return (
       <div className={shell}>
         <h3 className="mb-1 text-base font-bold text-slate-800">{title}</h3>
-        <p className="mb-3 text-xs text-slate-500">Loading…</p>
+        <div className="mb-3 flex items-center gap-2 text-xs text-slate-500">
+          <SpinnerDot className="border-indigo-600" />
+          <span>Loading…</span>
+        </div>
         <div
           className="mt-auto w-full flex-1 animate-pulse rounded-xl bg-gradient-to-br from-indigo-100/80 to-violet-100/50"
           style={{ minHeight: DASHBOARD_CHART_HEIGHT }}

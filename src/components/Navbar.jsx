@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { HiOutlineArrowRightOnRectangle, HiOutlineBars3, HiOutlineChevronDown } from 'react-icons/hi2';
 import { useAuth } from '../store/authContext';
 
 const routeTitles = {
@@ -14,6 +15,7 @@ const routeTitles = {
   '/dashboard/scripts': 'Scripts',
   '/dashboard/scripts/new': 'New script',
   '/dashboard/payments': 'Payments',
+  '/dashboard/agents': 'Agents',
   '/dashboard/users': 'Users',
 };
 
@@ -72,21 +74,13 @@ export default function Navbar({ onMenuClick }) {
             className="group flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200/90 bg-white/90 text-slate-600 shadow-sm ring-1 ring-slate-100/80 transition-all hover:-translate-y-0.5 hover:border-violet-300/70 hover:bg-gradient-to-br hover:from-violet-50 hover:to-indigo-50/80 hover:text-violet-800 hover:shadow-md hover:shadow-violet-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50 active:translate-y-0 lg:hidden"
             aria-label="Open menu"
           >
-            <svg
-              className="h-5 w-5 transition-transform group-hover:scale-105"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <HiOutlineBars3 className="h-5 w-5 transition-transform group-hover:scale-105" strokeWidth={2} aria-hidden />
           </button>
 
           <div className="hidden h-10 w-px shrink-0 bg-gradient-to-b from-transparent via-violet-200/80 to-transparent sm:block lg:hidden" aria-hidden />
 
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <div className="hidden h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-violet-200/60 bg-white/90 p-1 shadow-sm shadow-violet-500/10 sm:flex sm:items-center sm:justify-center">
+            <div className="hidden h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-violet-200/60 bg-white/90 p-1 shadow-sm shadow-violet-500/10 sm:flex sm:items-center sm:justify-center lg:hidden">
               <img
                 src="/voice-recognition_13320489.png"
                 alt=""
@@ -114,7 +108,7 @@ export default function Navbar({ onMenuClick }) {
           </div>
         </div>
 
-        <div className="relative shrink-0">
+        <div className="relative shrink-0 lg:hidden">
           <button
             type="button"
             onClick={() => setDropdownOpen((o) => !o)}
@@ -133,15 +127,11 @@ export default function Navbar({ onMenuClick }) {
               </span>
             </span>
             <span className="hidden max-w-[148px] truncate text-sm font-semibold text-slate-800 sm:block">{displayName}</span>
-            <svg
+            <HiOutlineChevronDown
               className={`hidden h-4 w-4 shrink-0 text-violet-400/90 transition-transform duration-200 sm:block ${dropdownOpen ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+              strokeWidth={2}
               aria-hidden
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+            />
           </button>
 
           {dropdownOpen && (
@@ -164,14 +154,7 @@ export default function Navbar({ onMenuClick }) {
                     className="group flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-700 transition-colors hover:bg-gradient-to-r hover:from-red-50 hover:to-orange-50/80 hover:text-red-700"
                   >
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition-colors group-hover:bg-red-100 group-hover:text-red-600">
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                        />
-                      </svg>
+                      <HiOutlineArrowRightOnRectangle className="h-4 w-4" strokeWidth={2} aria-hidden />
                     </span>
                     Sign out
                   </button>

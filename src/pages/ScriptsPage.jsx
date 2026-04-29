@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { PaginationBar } from '../components/PaginationBar';
+import PageLoader from '../components/PageLoader';
 import { deleteScript, getScripts } from '../services/scriptsService';
+import { useAuth } from '../store/authContext';
+import { getRole } from '../utils/roleUtils';
 
 const PAGE_SIZE = 10;
 
@@ -12,6 +16,8 @@ function safeList(res) {
 }
 
 export default function ScriptsPage() {
+  const { user } = useAuth();
+  const isViewer = getRole(user) === 'viewer';
   const [scripts, setScripts] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -58,7 +64,9 @@ export default function ScriptsPage() {
     <div className="min-h-full space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Call Scripts</h1>
-        <p className="mt-1 text-sm text-slate-500">Build AI conversation flows and reuse them in campaigns.</p>
+        <p className="mt-1 text-sm text-slate-500">
+          {isViewer ? 'View saved scripts. Editing and new scripts require an admin account.' : 'Build AI conversation flows and reuse them in campaigns.'}
+        </p>
       </div>
 
       {error && (
@@ -76,22 +84,21 @@ export default function ScriptsPage() {
               className="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
             />
           </div>
-          <Link
-            to="/dashboard/scripts/new"
-            className="btn-primary-gradient inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none"
-          >
-            <svg className="w-5 h-5 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            New script
-          </Link>
+          {!isViewer && (
+            <Link
+              to="/dashboard/scripts/new"
+              className="btn-primary-gradient inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none"
+            >
+              <svg className="w-5 h-5 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              New script
+            </Link>
+          )}
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
-            <p className="mt-3 text-sm text-slate-500">Loading scripts…</p>
-          </div>
+          <PageLoader message="Loading scripts…" className="py-16" size="md" />
         ) : scripts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <p className="text-slate-700 font-semibold">No scripts yet</p>
@@ -104,7 +111,9 @@ export default function ScriptsPage() {
                 <tr className="border-b border-slate-200 bg-slate-50/80">
                   <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Name</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Steps</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Actions</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    {isViewer ? 'Edit' : 'Actions'}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -121,13 +130,17 @@ export default function ScriptsPage() {
                       <td className="px-6 py-4 text-sm text-slate-600">{steps}</td>
                       <td className="px-6 py-4 text-right">
                         <div className="inline-flex items-center justify-end gap-2">
-                          <Link
-                            to={`/dashboard/scripts/${s.id}`}
-                            className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
-                          >
-                            Open
-                          </Link>
-                          {deleteConfirmId === s.id ? (
+                          {!isViewer && (
+                            <Link
+                              to={`/dashboard/scripts/${s.id}`}
+                              className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
+                            >
+                              Open
+                            </Link>
+                          )}
+                          {isViewer ? (
+                            <span className="text-xs text-slate-400">—</span>
+                          ) : deleteConfirmId === s.id ? (
                             <>
                               <button
                                 type="button"
@@ -164,27 +177,16 @@ export default function ScriptsPage() {
         )}
 
         {!loading && totalPages > 1 && (
-          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 px-6 py-3">
-            <p className="text-sm text-slate-600">Page {page} of {totalPages} ({total} total)</p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+          <PaginationBar
+            page={page}
+            totalPages={totalPages}
+            totalCount={total}
+            pageSize={PAGE_SIZE}
+            onPage={setPage}
+            disabled={loading}
+            variant="simple"
+            className="flex flex-col gap-3 border-t border-slate-100 px-6 py-3 sm:flex-row sm:items-center sm:justify-between"
+          />
         )}
       </div>
     </div>

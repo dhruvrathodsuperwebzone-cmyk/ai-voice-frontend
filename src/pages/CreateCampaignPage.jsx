@@ -1,31 +1,71 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
+import { useAuth } from '../store/authContext';
+import { getRole } from '../utils/roleUtils';
 import { createCampaign } from '../services/campaignsService';
 import { getLeads } from '../services/leadsService';
 import { getScripts } from '../services/scriptsService';
+import { getOutboundCallAgents } from '../services/callsService';
 import CampaignForm from '../components/campaigns/CampaignForm';
 import { useToast } from '../store/toastContext';
 
 export default function CreateCampaignPage() {
   const navigate = useNavigate();
   const toast = useToast();
+  const { user } = useAuth();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [agents, setAgents] = useState([]);
+  const [agentsLoading, setAgentsLoading] = useState(true);
   const [scripts, setScripts] = useState([]);
+  const [scriptsLoading, setScriptsLoading] = useState(true);
   const [availableLeads, setAvailableLeads] = useState([]);
   const [leadList, setLeadList] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
+    setAgentsLoading(true);
+    getOutboundCallAgents()
+      .then((res) => {
+        if (cancelled) return;
+        const body = res?.data ?? res;
+        const list =
+          body?.agents ??
+          body?.items ??
+          body?.data ??
+          (Array.isArray(body) ? body : []);
+        setAgents(Array.isArray(list) ? list : []);
+      })
+      .catch(() => {
+        if (!cancelled) setAgents([]);
+      })
+      .finally(() => {
+        if (!cancelled) setAgentsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setScriptsLoading(true);
     getScripts({ limit: 200 })
       .then((res) => {
         if (cancelled) return;
         const data = res?.data ?? res;
-        const list = Array.isArray(data?.scripts) ? data.scripts : (Array.isArray(data) ? data : []);
+        const list = Array.isArray(data?.scripts) ? data.scripts : Array.isArray(data) ? data : [];
         setScripts(list);
       })
-      .catch(() => { if (!cancelled) setScripts([]); });
-    return () => { cancelled = true; };
+      .catch(() => {
+        if (!cancelled) setScripts([]);
+      })
+      .finally(() => {
+        if (!cancelled) setScriptsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -35,6 +75,10 @@ export default function CreateCampaignPage() {
       setAvailableLeads(list);
     }).catch(() => setAvailableLeads([]));
   }, []);
+
+  if (getRole(user) === 'viewer') {
+    return <Navigate to="/dashboard/campaigns" replace />;
+  }
 
   async function handleSave(payload) {
     setSaving(true);
@@ -80,7 +124,7 @@ export default function CreateCampaignPage() {
               </span>
             </h1>
             <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
-              Launch outbound AI calls with a clear script, respectful hours, and the right leads—all in a few minutes.
+              Launch outbound AI calls with the right agent, your contact list, respectful hours, and dialing rules—all in a few minutes.
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
@@ -117,6 +161,9 @@ export default function CreateCampaignPage() {
               <CampaignForm
                 campaign={null}
                 scripts={scripts}
+                scriptsLoading={scriptsLoading}
+                agents={agents}
+                agentsLoading={agentsLoading}
                 onSave={handleSave}
                 onCancel={() => navigate('/dashboard/campaigns')}
                 saving={saving}
